@@ -1,1 +1,10 @@
 hello 以後程式碼可以丟這裡
+
+```sh
+cd final_1st_ver  
+make 
+./room_server
+./room_client 
+
+#* 詳細解說請看  final_1st_ver/readme.md  
+```
