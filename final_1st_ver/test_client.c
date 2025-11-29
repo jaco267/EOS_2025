@@ -31,40 +31,38 @@ int send_command(const char* command, char* response_buffer, size_t buffer_size)
     int sock = 0;
     struct sockaddr_in serv_addr;
     char buffer[BUFFER_SIZE] = {0};
-
     // 1. 創建 socket 檔案描述符
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         print_log("Socket creation error");
         return -1;
     }
-
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(PORT);
-
     // 轉換 IP 位址
     if (inet_pton(AF_INET, SERVER_IP, &serv_addr.sin_addr) <= 0) {
         print_log("Invalid address/ Address not supported");
         close(sock);
         return -1;
     }
-
     // 2. 連接到伺服器
     if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
         print_log("Connection Failed (Is server running?)");
         close(sock);
         return -1;
     }
-    
     print_log("------------------------------------------");
     printf("[SENT] %s\n", command);
-
     // 3. 發送命令
     send(sock, command, strlen(command), 0);
-    
     // 4. 接收回應
     int valread = read(sock, buffer, BUFFER_SIZE - 1);
     
     if (valread > 0) {
+        buffer[valread] = '\0'; 
+        // 將接收到的訊息複製到外部 response_buffer
+        strncpy(response_buffer, buffer, buffer_size - 1);
+        response_buffer[buffer_size - 1] = '\0'; // 確保終止符
+
         printf("[RECV]\n%s\n", buffer);
     } else {
         print_log("Error: Server disconnected or failed to read response.");
@@ -109,8 +107,13 @@ int main() {
     char cmd_buffer[100]; char recv_buffer[BUFFER_SIZE]; 
     // -----status
     status(recv_buffer,sizeof(recv_buffer));  
+
     // **檢查接收到的訊息**
-    printf("recev-----%s-----\n",recv_buffer);
+    if (strstr(recv_buffer, "FREE") != NULL) {
+        print_log("Check: Initial status confirms rooms are available.");
+    } else {
+        print_log("Check: Initial status shows no FREE rooms. Proceeding anyway.");
+    }
     //* ----reserve room 0----
     reserve(cmd_buffer,sizeof(cmd_buffer),room_id,recv_buffer,sizeof(recv_buffer));
     sleep(3); // 模擬 sleep 3 (等待 3 秒，模擬使用者前往報到)
@@ -119,8 +122,9 @@ int main() {
     status(recv_buffer,sizeof(recv_buffer));
     sleep(1);   
     release(cmd_buffer, sizeof(cmd_buffer), room_id, recv_buffer, sizeof(recv_buffer)); 
-
-
+    sleep(1); 
+    status(recv_buffer,sizeof(recv_buffer));
+    sleep(2);
     print_log("Automated Client sequence finished.");
     return 0;
 }
