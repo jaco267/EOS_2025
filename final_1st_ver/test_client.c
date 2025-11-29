@@ -114,9 +114,12 @@ int main() {
     } else {
         print_log("Check: Initial status shows no FREE rooms. Proceeding anyway.");
     }
+    sleep(1);
     //* ----reserve room 0----
     reserve(cmd_buffer,sizeof(cmd_buffer),room_id,recv_buffer,sizeof(recv_buffer));
-    sleep(3); // 模擬 sleep 3 (等待 3 秒，模擬使用者前往報到)
+    
+    status(recv_buffer,sizeof(recv_buffer));
+    sleep(1); // 模擬 sleep 3 (等待 3 秒，模擬使用者前往報到)
     checkin(cmd_buffer, sizeof(cmd_buffer), room_id, recv_buffer, sizeof(recv_buffer)); 
     sleep(1); 
     status(recv_buffer,sizeof(recv_buffer));
@@ -124,7 +127,7 @@ int main() {
     release(cmd_buffer, sizeof(cmd_buffer), room_id, recv_buffer, sizeof(recv_buffer)); 
     sleep(1); 
     status(recv_buffer,sizeof(recv_buffer));
-    sleep(2);
+    sleep(1);
     print_log("Automated Client sequence finished.");
     return 0;
 }

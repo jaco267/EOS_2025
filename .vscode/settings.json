@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "*.ejs": "html",
+        "globe_var.h": "c",
+        "room_action.h": "c"
+    }
+}
