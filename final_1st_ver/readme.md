@@ -1,7 +1,20 @@
 ```sh
 make 
+
+#run commands by hand 
 ./room_server
 ./room_client 
+
+#or just execute by script   
+chmod +777 demo.sh
+./demo.sh
+
+#ctrl+b
+#:kill-session
+#:set -g mouse on
+
+#or just execute by test c program  
+./test_client  
 ```
 ```
 --- Smart Room Reservation Client ---
