@@ -53,12 +53,10 @@ char* get_all_status() {
         pthread_mutex_unlock(&room_mutex);
         return strdup("ERROR: Memory allocation failed.");
     }
-
     strcpy(response, "--- Room Status ---\n");
     for (int i = 0; i < MAX_ROOMS; i++) {
         char room_info[100];
-        long time_elapsed = time(NULL) - rooms[i].reserve_time;
-        
+        long time_elapsed = time(NULL) - rooms[i].reserve_time;   
         snprintf(room_info, sizeof(room_info),
                  "Room %d | Status: %s%s | Reserve Count: %d | Time Elapsed: %lds\n",
                  rooms[i].id,
