@@ -13,6 +13,41 @@ release <id> - Manually release a room.
 extend <id> - Extend an IN_USE room once.
 exit - Exit the client.
 ```
+
+#### example 
+```
+Enter command: status
+  Room 0 | Status: FREE (🟢) | Reserve Count: 0 | Time Elapsed: 0s
+  Room 1 | Status: FREE (🟢) | Reserve Count: 0 | Time Elapsed: 0s
+  Room 2 | Status: FREE (🟢) | Reserve Count: 0 | Time Elapsed: 0s
+Enter command: reserve 0 
+Enter command: checkin 0  # have to checkin within 5s after reserve
+Enter command: status
+  Room 0 | Status: IN_USE (🔴) | Reserve Count: 1 | Time Elapsed: 5s
+  Room 1 | Status: FREE (🟢) | Reserve Count: 0 | Time Elapsed: 0s
+  Room 2 | Status: FREE (🟢) | Reserve Count: 0 | Time Elapsed: 0s
+# 30 s 後  room 0 會自動退回  
+Enter command: status
+  Room 0 | Status: FREE (🟢) | Reserve Count: 1 | Time Elapsed: 0s
+  Room 1 | Status: FREE (🟢) | Reserve Count: 0 | Time Elapsed: 0s
+  Room 2 | Status: FREE (🟢) | Reserve Count: 0 | Time Elapsed: 0s
+Enter command: reserve 0 
+Enter command: checkin 0
+  Room 0 | Status: IN_USE (🔴) (Extended) | Reserve Count: 2 | Time Elapsed: 27s
+  Room 1 | Status: FREE (🟢) | Reserve Count: 0 | Time Elapsed: 0s
+  Room 2 | Status: FREE (🟢) | Reserve Count: 0 | Time Elapsed: 0s
+Enter command: extend 0    #把時間延長 30s  
+
+
+Enter command: reserve 1  
+Enter command: checkin 1  
+Enter commain: release 1   #釋放 房間  
+
+
+Enter command: exit
+
+```
+
 ### 期末專題: 智慧訂房間系統
 #### 系統說明
 本系統：智慧訂房系統。提供即時房況、預約、報到、釋放。三色LED顯示狀態
