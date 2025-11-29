@@ -3,7 +3,7 @@ CFLAGS = -Wall -O2
 SRC_client = room_client.c 
 
 SRC_test   = test_client.c
-SRC_server = room_server.c 
+SRC_server = room_server_/room_server.c 
 
 all: room_client room_server test_client
 
@@ -18,4 +18,4 @@ test_client: $(SRC_test)
 	$(CC) $(CFLAGS) -o $@ $^
 
 clean:
-	rm -f room_client room_server
+	rm -f room_client room_server test_client

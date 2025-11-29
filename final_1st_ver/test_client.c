@@ -10,10 +10,8 @@
 #define PORT 8080
 #define BUFFER_SIZE 2048
 
-/**
- * @brief 格式化時間戳並印出訊息。
- * @param msg 要印出的訊息
- */
+/*** @brief 格式化時間戳並印出訊息。
+ * @param msg 要印出的訊息*/
 void print_log(const char* msg) {
     time_t timer;
     char buffer[26];
@@ -29,7 +27,7 @@ void print_log(const char* msg) {
  * @param command 要發送的命令字串。
  * @return 0 成功, -1 失敗。
  */
-int send_command(const char* command) {
+int send_command(const char* command, char* response_buffer, size_t buffer_size) {
     int sock = 0;
     struct sockaddr_in serv_addr;
     char buffer[BUFFER_SIZE] = {0};
@@ -76,46 +74,53 @@ int send_command(const char* command) {
     close(sock);
     return 0;
 }
-
-
+void status(char* recv_buffer, size_t recv_size){
+    if (send_command("status", recv_buffer, recv_size) != 0) {
+        print_log("FATAL: get_status failed. Exiting program.");
+        exit(EXIT_FAILURE);
+    }
+}
+void reserve(char* cmd_buffer, size_t cmd_size, int room_id, char* recv_buffer, size_t recv_size){
+    
+    snprintf(cmd_buffer, cmd_size, "reserve %d", room_id);
+    if (send_command(cmd_buffer, recv_buffer, recv_size) != 0) {
+        print_log("FATAL: reserve_room failed. Exiting program.");
+        exit(EXIT_FAILURE);
+    }
+}
+void checkin(char* cmd_buffer, size_t cmd_size, int room_id, char* recv_buffer, size_t recv_size) {
+    snprintf(cmd_buffer, cmd_size, "checkin %d", room_id);
+    if (send_command(cmd_buffer, recv_buffer, recv_size) != 0) {
+        print_log("FATAL: checkin_room failed. Exiting program.");
+        exit(EXIT_FAILURE);
+    }
+}
+void release(char* cmd_buffer, size_t cmd_size, int room_id, char* recv_buffer, size_t recv_size) {
+    snprintf(cmd_buffer, cmd_size, "release %d", room_id);
+    int res =  send_command(cmd_buffer, recv_buffer, recv_size);
+    if (res != 0){
+        print_log("FATAL: release_room failed. Exiting program.");
+        exit(EXIT_FAILURE);
+    }
+}
 int main() {
     print_log("Automated Client starting sequence...");
     int room_id = 0;
-    char cmd_buffer[100];
-    int result;
-
-    // 模擬 tmux send-keys -t $SESSION:0.1 "status" C-m
-    print_log("Step 1: Get initial STATUS.");
-    result = send_command("status");
-    if (result != 0) return 1;
-    
-    // 模擬 tmux send-keys -t $SESSION:0.1 "reserve 0" C-m
-    print_log("Step 2: Reserve Room 0.");
-    snprintf(cmd_buffer, sizeof(cmd_buffer), "reserve %d", room_id);
-    result = send_command(cmd_buffer);
-    if (result != 0) return 1;
-
-    // 模擬 sleep 3 (等待 3 秒，模擬使用者前往報到)
-    print_log("Pausing for 3 seconds (Simulate arrival to check-in).");
-    sleep(3);
-    
-    // 模擬 tmux send-keys -t $SESSION:0.1 "checkin 0" C-m
-    print_log("Step 3: Check-in Room 0.");
-    snprintf(cmd_buffer, sizeof(cmd_buffer), "checkin %d", room_id);
-    result = send_command(cmd_buffer);
-    if (result != 0) return 1;
-
-    // 模擬 sleep 1
-    print_log("Pausing for 1 second.");
+    char cmd_buffer[100]; char recv_buffer[BUFFER_SIZE]; 
+    // -----status
+    status(recv_buffer,sizeof(recv_buffer));  
+    // **檢查接收到的訊息**
+    printf("recev-----%s-----\n",recv_buffer);
+    //* ----reserve room 0----
+    reserve(cmd_buffer,sizeof(cmd_buffer),room_id,recv_buffer,sizeof(recv_buffer));
+    sleep(3); // 模擬 sleep 3 (等待 3 秒，模擬使用者前往報到)
+    checkin(cmd_buffer, sizeof(cmd_buffer), room_id, recv_buffer, sizeof(recv_buffer)); 
     sleep(1); 
+    status(recv_buffer,sizeof(recv_buffer));
+    sleep(1);   
+    release(cmd_buffer, sizeof(cmd_buffer), room_id, recv_buffer, sizeof(recv_buffer)); 
 
-    // 模擬 tmux send-keys -t $SESSION:0.1 "status" C-m
-    print_log("Step 4: Check STATUS after check-in.");
-    result = send_command("status");
-    if (result != 0) return 1;
-    
-    // 繼續其他自動化步驟...
-    
+
     print_log("Automated Client sequence finished.");
     return 0;
 }
