@@ -14,71 +14,42 @@ void run_client() {
     struct sockaddr_in serv_addr;
     char buffer[BUFFER_SIZE] = {0};
     char command[100];
-    
     printf("--- Smart Room Reservation Client ---\n");
     printf("Commands:\n");
-    printf("STATUS - Get all room statuses.\n");
-    printf("RESERVE <id> - Reserve a room (e.g., RESERVE 0).\n");
-    printf("CHECKIN <id> - Check-in to a reserved room.\n");
-    printf("RELEASE <id> - Manually release a room.\n");
-    printf("EXTEND <id> - Extend an IN_USE room once.\n");
-    printf("EXIT - Exit the client.\n");
+    printf("status - Get all room statuses.\n");
+    printf("reserve <id> - Reserve a room (e.g., reserve 0).\n");
+    printf("checkin <id> - Check-in to a reserved room.\n");
+    printf("release <id> - Manually release a room.\n");
+    printf("extend <id> - Extend an IN_USE room once.\n");
+    printf("exit - Exit the client.\n");
     printf("-------------------------------------\n");
-    
     while (1) {
         printf("\nEnter command: ");
-        if (fgets(command, sizeof(command), stdin) == NULL) {
-            break;
-        }
-        
-        // 移除換行符
-        command[strcspn(command, "\n")] = 0; 
-        
-        if (strcasecmp(command, "EXIT") == 0) {
-            printf("Exiting client.\n");
-            break;
-        }
-        
-        // 1. 創建 socket 檔案描述符
-        if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-            perror("\nSocket creation error");
-            continue;
-        }
-
+        if (fgets(command, sizeof(command), stdin) == NULL) {   break;}
+        command[strcspn(command, "\n")] = 0;  // 移除換行符 
+        if (strcasecmp(command, "exit") == 0) {printf("Exiting client.\n");break;}
+        // 1. 創建 client socket fd
+        if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) { perror("\nSocket creation error");continue;}
         serv_addr.sin_family = AF_INET;
         serv_addr.sin_port = htons(PORT);
-
         // 轉換 IP 位址從文字到二進制格式
         if (inet_pton(AF_INET, SERVER_IP, &serv_addr.sin_addr) <= 0) {
-            printf("\nInvalid address/ Address not supported \n");
-            close(sock);
+            printf("\nInvalid address/ Address not supported \n"); close(sock);
             continue;
         }
-
-        // 2. 連接到伺服器
+        // 2. connect to server
         if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-            perror("Connection Failed");
-            close(sock);
-            // 由於伺服器可能還未啟動，這裡不應直接退出
-            sleep(1); 
+            perror("Connection Failed"); close(sock);
+            sleep(1); // 由於伺服器可能還未啟動，這裡不應直接退出 
             continue;
         }
-        
-        // 3. 發送命令
-        send(sock, command, strlen(command), 0);
-        
+        send(sock, command, strlen(command), 0); // 3. 發送命令
         // 4. 接收回應
         memset(buffer, 0, BUFFER_SIZE);
         int valread = read(sock, buffer, BUFFER_SIZE - 1);
-        
-        if (valread > 0) {
-            printf("\n--- Server Response ---\n%s\n-----------------------\n", buffer);
-        } else {
-            printf("\nError: Server disconnected or failed to read response.\n");
-        }
-
-        // 5. 關閉 socket
-        close(sock);
+        if (valread > 0) {printf("\n--- Server Response ---\n%s\n-----------------------\n", buffer);
+        } else {          printf("\nError: Server disconnected or failed to read response.\n");}
+        close(sock);// 5. 關閉 socket
     }
 }
 

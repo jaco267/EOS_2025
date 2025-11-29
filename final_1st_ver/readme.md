@@ -1,3 +1,18 @@
+```sh
+make 
+./room_server
+./room_client 
+```
+```
+--- Smart Room Reservation Client ---
+Commands:
+status - Get all room statuses.
+reserve <id> - Reserve a room (e.g., reserve 0).
+checkin <id> - Check-in to a reserved room.
+release <id> - Manually release a room.
+extend <id> - Extend an IN_USE room once.
+exit - Exit the client.
+```
 ### 期末專題: 智慧訂房間系統
 #### 系統說明
 本系統：智慧訂房系統。提供即時房況、預約、報到、釋放。三色LED顯示狀態
@@ -54,7 +69,7 @@ system start -> 初始化 kernel module (LED/GPIO) -> 啟動房間狀態管理�
   - 以條件變數或 wait-queue 喚醒等待端（例如候補清單）。
 - Comm
   - 狀態讀取 : 透過 cat 或 read() 讀取狀態。
-  - 指令通道：使用 ioctl() 或 write() 傳送指令 {RESERVE, CHECKIN, RELEASE, EXTEND}。
+  - 指令通道：使用 ioctl() 或 write() 傳送指令 {reserve, checkin, release, extend}。
 
 - I/O（Device driver／Device table）
   - GPIO 驅動控制三色 LED；建立 /dev/room 介面。

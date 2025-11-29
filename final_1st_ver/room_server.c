@@ -80,24 +80,19 @@ char* get_all_status() {
  */
 int reserve_room(int room_id) {
     if (room_id < 0 || room_id >= MAX_ROOMS) return -2; // 無效 ID
-
     pthread_mutex_lock(&room_mutex);
-
     room_t *r = &rooms[room_id];
     // 檢查單日使用上限（簡化：不實際檢查使用者 ID，僅檢查房間次數）
     if (room_reservations_today[room_id] >= 2) {
         pthread_mutex_unlock(&room_mutex);
         return -3; // 使用次數超限
     }
-    
     // 檢查是否已存在預約（簡化：不檢查使用者 ID，假設每個客戶端代表一個唯一使用者）
     for(int i = 0; i < MAX_ROOMS; i++) {
         if (rooms[i].status == RESERVED) { // 實際應用中，需檢查是否為同一個使用者
              // 假設簡化規則：不得同時持有多筆預約 (在此不做複雜檢查)
         }
     }
-
-
     if (r->status == FREE) {
         r->status = RESERVED;
         r->reserve_time = time(NULL);
@@ -107,7 +102,6 @@ int reserve_room(int room_id) {
         printf("[SERVER LOG] Room %d reserved.\n", room_id);
         return 0;
     }
-
     pthread_mutex_unlock(&room_mutex);
     return -1; // 房間不可用
 }
@@ -119,10 +113,8 @@ int reserve_room(int room_id) {
  */
 int check_in(int room_id) {
     if (room_id < 0 || room_id >= MAX_ROOMS) return -2; // 無效 ID
-
     pthread_mutex_lock(&room_mutex);
     room_t *r = &rooms[room_id];
-    
     if (r->status == RESERVED) {
         // 更新 reserve_time 作為 session start time
         r->status = IN_USE;
@@ -131,7 +123,6 @@ int check_in(int room_id) {
         pthread_mutex_unlock(&room_mutex);
         return 0;
     }
-
     pthread_mutex_unlock(&room_mutex);
     return -1; // 無法報到
 }
@@ -201,8 +192,7 @@ void* timer_thread(void* arg) {
         pthread_mutex_lock(&room_mutex);
         time_t now = time(NULL);
         for (int i=0; i<MAX_ROOMS; i++) {
-            room_t *r = &rooms[i];
-            
+            room_t *r = &rooms[i];       
             // 處理 RESERVED 狀態
             if (r->status == RESERVED) {
                 if (now - r->reserve_time >= CHECKIN_TIMEOUT) {
@@ -216,14 +206,12 @@ void* timer_thread(void* arg) {
                            i, now - r->reserve_time, CHECKIN_TIMEOUT);
                 }
             }
-
             // 處理 IN_USE 狀態
             if (r->status == IN_USE) {
                 time_t allowed_duration = SLOT_DURATION;
                 if (r->extend_used) {
                     allowed_duration += SLOT_DURATION; // 延長後為 60 秒
                 }
-
                 if (now - r->reserve_time >= allowed_duration) {
                     // 時段結束自動釋放
                     printf("[TIMER] Room %d session ended! (Auto-release)\n", i);
@@ -251,44 +239,38 @@ void* client_handler(void* arg) {
     free(arg); // 釋放主執行緒分配的記憶體
     char buffer[1024] = {0};
     char response[1024];
-
     printf("[SERVER] New client connected on socket %d.\n", client_sock);
-
     // 接收客戶端命令
     int valread = read(client_sock, buffer, 1024);
     if (valread <= 0) {
         printf("[SERVER] Client %d disconnected or error.\n", client_sock);
         goto cleanup;
     }
-    
     // 移除換行符
     buffer[strcspn(buffer, "\n")] = 0;
-    
     // 解析命令: CMD ROOM_ID
     char *token = strtok(buffer, " ");
     char *cmd = token;
-    
     int room_id = -1;
-    if (cmd != NULL && strcmp(cmd, "STATUS") != 0) {
+    if (cmd != NULL && strcmp(cmd, "status") != 0) {
         token = strtok(NULL, " ");
         if (token != NULL) {
             room_id = atoi(token);
         }
     }
-
     // 處理命令
     if (cmd == NULL) {
         snprintf(response, sizeof(response), "ERROR Please provide a command.");
-    } else if (strcmp(cmd, "STATUS") == 0) {
+    } else if (strcmp(cmd, "status") == 0) {
         char *status_data = get_all_status();
         strcpy(response, "OK\n");
         strcat(response, status_data);
         free(status_data);
-    } else if (room_id == -1 && strcmp(cmd, "STATUS") != 0) {
+    } else if (room_id == -1 && strcmp(cmd, "status") != 0) {
         snprintf(response, sizeof(response), "ERROR Invalid or missing Room ID.");
     } else if (room_id < 0 || room_id >= MAX_ROOMS) {
         snprintf(response, sizeof(response), "ERROR Room ID %d is out of range (0-%d).", room_id, MAX_ROOMS-1);
-    } else if (strcmp(cmd, "RESERVE") == 0) {
+    } else if (strcmp(cmd, "reserve") == 0) {
         int res = reserve_room(room_id);
         if (res == 0) {
             snprintf(response, sizeof(response), "OK Room %d reserved successfully. Check-in in %d seconds.", room_id, CHECKIN_TIMEOUT);
@@ -297,21 +279,21 @@ void* client_handler(void* arg) {
         } else {
             snprintf(response, sizeof(response), "ERROR Room %d reservation failed. Room is not free.", room_id);
         }
-    } else if (strcmp(cmd, "CHECKIN") == 0) {
+    } else if (strcmp(cmd, "checkin") == 0) {
         int res = check_in(room_id);
         if (res == 0) {
             snprintf(response, sizeof(response), "OK Room %d checked in. Session duration: %d seconds.", room_id, SLOT_DURATION);
         } else {
             snprintf(response, sizeof(response), "ERROR Room %d check-in failed. Status must be RESERVED.", room_id);
         }
-    } else if (strcmp(cmd, "RELEASE") == 0) {
+    } else if (strcmp(cmd, "release") == 0) {
         int res = release_room(room_id);
         if (res == 0) {
             snprintf(response, sizeof(response), "OK Room %d released successfully.", room_id);
         } else {
             snprintf(response, sizeof(response), "ERROR Room %d release failed. Room is already FREE.", room_id);
         }
-    } else if (strcmp(cmd, "EXTEND") == 0) {
+    } else if (strcmp(cmd, "extend") == 0) {
         int res = extend_room(room_id);
         if (res == 0) {
             snprintf(response, sizeof(response), "OK Room %d extended by %d seconds.", room_id, SLOT_DURATION);
@@ -321,10 +303,8 @@ void* client_handler(void* arg) {
     } else {
         snprintf(response, sizeof(response), "ERROR Unknown command: %s.", cmd);
     }
-
     // 將回應發送給客戶端
     send(client_sock, response, strlen(response), 0);
-
 cleanup:
     close(client_sock);
     printf("[SERVER] Client %d handler finished.\n", client_sock);
