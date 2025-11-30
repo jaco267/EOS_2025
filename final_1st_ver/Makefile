@@ -4,9 +4,9 @@ SRC_client = room_client.c
 
 SRC_test   = test_client.c
 SRC_server = room_server_/room_server.c   room_server_/room_action.c  \
-  room_server_/globe_var.c
+  room_server_/globe_var.c room_server_/room_timer.c
 
-all: room_client room_server test_client
+all: room_client room_server test_client 
 
 room_client: $(SRC_client)
 	$(CC) $(CFLAGS) -o $@ $^

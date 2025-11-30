@@ -4,13 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "globe_var.h"
-
-// get current tick (make a snapshot)
-// returns as 64-bit unsigned to avoid overflow in calculations
-static inline uint64_t get_current_tick_snapshot() {
-    // read volatile sig_atomic_t and cast to uint64_t
-    return (uint64_t)g_tick;
-}
+#include "room_timer.h"
 
 
 // helper: status -> string
