@@ -3,8 +3,7 @@ CFLAGS = -Wall -O2
 SRC_client = room_client.c 
 
 SRC_test   = test_client.c
-SRC_server = room_server_/room_server.c   room_server_/room_action.c  \
-  room_server_/globe_var.c
+SRC_server = room_server_/room_server.c   
 
 all: room_client room_server test_client
 

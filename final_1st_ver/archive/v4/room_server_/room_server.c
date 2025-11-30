@@ -16,10 +16,50 @@
 #include <signal.h>
 #include <stdint.h>
 #include <errno.h>
-#include "globe_var.h"
-#include "room_action.h"
 
+// system config
+#define MAX_ROOMS 3
+#define PORT 8080
 
+// durations are still specified in seconds for easy reading.
+// We'll convert to ticks using TICK_MS.
+#define SLOT_DURATION 30        // seconds (one slot)
+#define CHECKIN_TIMEOUT 5       // seconds to check-in after reservation
+
+#define TICK_MS 100             // tick granularity (milliseconds)
+#define TICKS_PER_SEC (1000 / TICK_MS)
+
+// Derived tick counts
+#define SLOT_TICKS (SLOT_DURATION * TICKS_PER_SEC)
+#define CHECKIN_TICKS (CHECKIN_TIMEOUT * TICKS_PER_SEC)
+
+typedef enum { FREE, RESERVED, IN_USE } room_status_t;
+
+typedef struct {
+    int id;
+    room_status_t status;
+    uint64_t reserve_tick;   // tick when reserved / checked-in
+    int extend_used;         // 0: not extended, 1: extended
+} room_t;
+
+// shared resources
+room_t rooms[MAX_ROOMS];
+pthread_mutex_t room_mutex = PTHREAD_MUTEX_INITIALIZER;
+int room_reservations_today[MAX_ROOMS] = {0};
+
+// global tick counter (tick increments in signal handler)
+// use sig_atomic_t for signal-safety; worker will read into a wider type
+static volatile sig_atomic_t g_tick = 0;
+
+// helper: status -> string
+const char* get_status_str(room_status_t status) {
+    switch(status) {
+        case FREE: return "FREE (🟢)";
+        case RESERVED: return "RESERVED (🔴)";
+        case IN_USE: return "IN_USE (🔴)";
+        default: return "UNKNOWN";
+    }
+}
 
 // get current tick (make a snapshot)
 // returns as 64-bit unsigned to avoid overflow in calculations
