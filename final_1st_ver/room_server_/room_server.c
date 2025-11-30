@@ -20,9 +20,6 @@
 #include "room_action.h"
 #include "room_timer.h"
 
-
-
-
 // ---------- client handler ----------
 
 void* client_handler(void* arg) {
