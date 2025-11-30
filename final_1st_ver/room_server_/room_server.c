@@ -118,27 +118,16 @@ int main() {
     // block other signals while in handler
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = SA_RESTART;
-    if (sigaction(SIGALRM, &sa, NULL) != 0) {
-        perror("sigaction");
-        return 1;
-    }
-
+    if (sigaction(SIGALRM, &sa, NULL) != 0) {perror("sigaction");return 1;}
     // configure timer: TICK_MS milliseconds interval
     struct itimerval itv;
     itv.it_value.tv_sec = TICK_MS / 1000;
     itv.it_value.tv_usec = (TICK_MS % 1000) * 1000;
     itv.it_interval = itv.it_value; // periodic
-    if (setitimer(ITIMER_REAL, &itv, NULL) != 0) {
-        perror("setitimer");
-        return 1;
-    }
-
+    if (setitimer(ITIMER_REAL, &itv, NULL) != 0) {perror("setitimer");return 1;}
     // start timer worker thread
     pthread_t tid_timer;
-    if (pthread_create(&tid_timer, NULL, timer_worker, NULL) != 0) {
-        perror("pthread_create timer_worker");
-        return 1;
-    }
+    if (pthread_create(&tid_timer, NULL, timer_worker, NULL) != 0) {perror("pthread_create timer_worker");return 1;}
     pthread_detach(tid_timer);
 
     // setup network server (same as original)

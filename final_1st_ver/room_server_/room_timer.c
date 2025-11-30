@@ -52,6 +52,7 @@ void* timer_worker(void* arg) {
                     }
                 }
             } else if (r->status == IN_USE) {
+                //** extended =1 : 2 SLOT = 60s,  extended=0: 1 SLOT = 30s   */
                 uint64_t allowed = SLOT_TICKS + (r->extend_used ? SLOT_TICKS : 0);
                 uint64_t elapsed = 0;
                 if (now_tick >= r->reserve_tick) elapsed = now_tick - r->reserve_tick;

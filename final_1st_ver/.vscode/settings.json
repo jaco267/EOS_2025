@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "*.ejs": "html",
-        "globe_var.h": "c"
+        "globe_var.h": "c",
+        "__threading_support": "c"
     }
 }
