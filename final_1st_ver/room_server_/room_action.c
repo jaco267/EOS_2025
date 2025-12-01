@@ -101,21 +101,22 @@ int release_room(int room_id) {
 
 int extend_room(int room_id) {
     if (room_id < 0 || room_id >= MAX_ROOMS) return -2;
+
     pthread_mutex_lock(&room_mutex);
-    // check for other pending reservations (simplified: any RESERVED except self)
-    //todo 這有點怪 為什麼其他房間有reserve 就不能reserve?
-    int has_other_reserved = 0;
-    for (int i = 0; i < MAX_ROOMS; i++) {
-        if (i == room_id) continue;
-        if (rooms[i].status == RESERVED) { has_other_reserved = 1; break; }
-    }
     room_t *r = &rooms[room_id];
-    if (r->status == IN_USE && r->extend_used == 0 && !has_other_reserved) {
+
+    // 條件：房間正在使用中，且尚未延長過
+    if (r->status == IN_USE && r->extend_used == 0) {
         r->extend_used = 1;
         pthread_mutex_unlock(&room_mutex);
-        printf("[SERVER LOG] Room %d extended at tick %llu.\n", room_id, (unsigned long long)get_current_tick_snapshot());
+
+        printf("[SERVER LOG] Room %d extended at tick %llu.\n",
+               room_id,
+               (unsigned long long)get_current_tick_snapshot());
         return 0;
     }
+
     pthread_mutex_unlock(&room_mutex);
-    return -1;
+    return -1; // 不合法延長
 }
+
