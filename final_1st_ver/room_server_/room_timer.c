@@ -30,6 +30,21 @@ void* timer_worker(void* arg) {
         last_seen_tick = now_tick;
 
         pthread_mutex_lock(&room_mutex);
+        
+        // ==== 模擬「一天 = 180 秒」的跨日檢查 ====
+        time_t now_sec = time(NULL);
+        long today = now_sec / SIM_DAY_SECONDS;  // 第幾個模擬日
+        if (g_last_reset_day == -1) {
+            g_last_reset_day = today;
+        } else if (today != g_last_reset_day) {
+            // 模擬過了一天 → 歸零
+            for (int i = 0; i < MAX_ROOMS; i++) {
+                room_reservations_today[i] = 0;
+            }
+            g_last_reset_day = today;
+            printf("[TIMER] New (sim) day. room_reservations_today reset to 0.\n");
+        }
+        
         for (int i = 0; i < MAX_ROOMS; i++) {
             room_t *r = &rooms[i];
             if (r->status == RESERVED) {
@@ -42,6 +57,18 @@ void* timer_worker(void* arg) {
                     r->status = FREE;
                     r->extend_used = 0;
                     r->reserve_tick = 0;
+                    // 若有候補 → 重新預約給候補
+        	if (room_waiting_count[i] > 0) {
+            	room_waiting_count[i]--;
+            	r->status       = RESERVED;
+            	r->reserve_tick = now_tick;
+            	r->extend_used  = 0;
+            	room_reservations_today[i]++;
+
+            	printf("[TIMER] Room %d assigned to waiting list after timeout. "
+                   "Remaining waiters = %d.\n",
+                   i, room_waiting_count[i]);
+        	}
                 } else if (elapsed >= CHECKIN_TICKS - (5 * TICKS_PER_SEC)) {
                     // countdown reminder (5 seconds before timeout)
                     // print every tick in that window could be noisy; we print once when entering window
@@ -62,6 +89,18 @@ void* timer_worker(void* arg) {
                     r->status = FREE;
                     r->extend_used = 0;
                     r->reserve_tick = 0;
+                    //候補發生
+                    if (room_waiting_count[i] > 0) {
+            	room_waiting_count[i]--;
+            	r->status       = RESERVED;
+            	r->reserve_tick = now_tick;
+            	r->extend_used  = 0;
+            	room_reservations_today[i]++;
+
+            	printf("[TIMER] Room %d assigned to waiting list after session end. "
+                   "Remaining waiters = %d.\n",
+                   i, room_waiting_count[i]);
+        }
                 } else if (elapsed == allowed - (5 * TICKS_PER_SEC)) {
                     printf("[TIMER] Room %d IN_USE: Session ending soon! (%llu/%llu sec)\n",
                            i, (unsigned long long)(elapsed / TICKS_PER_SEC), (unsigned long long)(allowed / TICKS_PER_SEC));

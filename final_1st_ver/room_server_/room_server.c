@@ -63,7 +63,13 @@ void* client_handler(void* arg) {
             snprintf(response, sizeof(response), "OK Room %d reserved successfully. Check-in in %d seconds.", room_id, CHECKIN_TIMEOUT);
         } else if (res == -3) {
             snprintf(response, sizeof(response), "ERROR Room %d reservation failed. Daily limit reached.", room_id);
-        } else {
+        } else if (res == -4) {
+        snprintf(response, sizeof(response),
+                 "WAIT Room %d is currently not free.\n"
+                 "You have been added to the waiting list.\n"
+                 "When the current session ends, the room will be reserved for a waiting client automatically.",
+                 room_id);
+        }else {
             snprintf(response, sizeof(response), "ERROR Room %d reservation failed. Room is not free.", room_id);
         }
     } else if (strcmp(cmd, "checkin") == 0) {
@@ -110,6 +116,9 @@ int main() {
         rooms[i].reserve_tick = 0;
         room_reservations_today[i] = 0;
     }
+    // 取得「今天」的 day index
+time_t now = time(NULL);
+g_last_reset_day = now / SIM_DAY_SECONDS;
 
     // setup SIGALRM handler for tick
     struct sigaction sa;

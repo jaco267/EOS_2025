@@ -63,6 +63,17 @@ int reserve_room(int room_id) {
             (unsigned long long)r->reserve_tick);
         return 0;
     }
+    else {
+        // 房間不空閒 → 加入候補隊列
+        room_waiting_count[room_id]++;
+        int pos = room_waiting_count[room_id];
+
+        pthread_mutex_unlock(&room_mutex);
+
+        printf("[SERVER LOG] Room %d is busy. Add to waitlist (count=%d).\n",
+               room_id, pos);
+        return -4;   // 代表加入候補成功
+    }
     pthread_mutex_unlock(&room_mutex);
     return -1;
 }
@@ -91,8 +102,22 @@ int release_room(int room_id) {
         r->status = FREE;
         r->extend_used = 0;
         r->reserve_tick = 0;
+        printf("[SERVER LOG] Room %d released by user.\n", room_id);
+        // 若有候補 → 立刻讓候補接手
+        if (room_waiting_count[room_id] > 0) {
+            room_waiting_count[room_id]--;
+            r->status = RESERVED;
+            r->reserve_tick = get_current_tick_snapshot();
+            r->extend_used  = 0;
+            room_reservations_today[room_id]++;
+
+            printf("[SERVER LOG] Room %d assigned to waiting list. "
+                   "Remaining waiters = %d.\n",
+                   room_id, room_waiting_count[room_id]);
+        }
+        
         pthread_mutex_unlock(&room_mutex);
-        printf("[SERVER LOG] Room %d released.\n", room_id);
+        //printf("[SERVER LOG] Room %d released.\n", room_id);
         return 0;
     }
     pthread_mutex_unlock(&room_mutex);
