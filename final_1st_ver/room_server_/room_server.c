@@ -117,9 +117,8 @@ int main() {
         room_reservations_today[i] = 0;
     }
     // 取得「今天」的 day index
-time_t now = time(NULL);
-g_last_reset_day = now / SIM_DAY_SECONDS;
-
+    time_t now = time(NULL);
+    g_last_reset_day = now / SIM_DAY_SECONDS;
     // setup SIGALRM handler for tick
     struct sigaction sa;
     memset(&sa, 0, sizeof(sa));
