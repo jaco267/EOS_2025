@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:145.0) Gecko/20100101 Firefox/145.0" version="29.2.3">
+  <diagram name="Page-1" id="umCFwnkkn9fxE0BBSTLf">
+    <mxGraphModel dx="588" dy="807" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="jV23Sz9BFm9FaIYKXLZd-9" edge="1" parent="1" source="zzZt-i6TT5fXaMIDJAb2-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="zzZt-i6TT5fXaMIDJAb2-2" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zzZt-i6TT5fXaMIDJAb2-1" parent="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" value="&lt;div&gt;Reserve room i&lt;/div&gt;" vertex="1">
+          <mxGeometry height="30" width="100" x="261" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="jV23Sz9BFm9FaIYKXLZd-4" edge="1" parent="1" source="zzZt-i6TT5fXaMIDJAb2-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="zzZt-i6TT5fXaMIDJAb2-7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="jV23Sz9BFm9FaIYKXLZd-11" edge="1" parent="1" source="zzZt-i6TT5fXaMIDJAb2-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="zzZt-i6TT5fXaMIDJAb2-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zzZt-i6TT5fXaMIDJAb2-2" parent="1" style="rhombus;whiteSpace=wrap;html=1;" value="&lt;div&gt;If&amp;nbsp;room_reserve_today[i]&amp;lt;2&lt;/div&gt;" vertex="1">
+          <mxGeometry height="55" width="192.5" x="214.75" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="zzZt-i6TT5fXaMIDJAb2-5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="&lt;div&gt;reserve&lt;/div&gt;&lt;div&gt;fail&lt;/div&gt;" vertex="1">
+          <mxGeometry height="37.5" width="50" x="450" y="248.75" as="geometry" />
+        </mxCell>
+        <mxCell id="2ReqnB4O_W-fBtRD3c_4-3" edge="1" parent="1" source="zzZt-i6TT5fXaMIDJAb2-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="310" y="420" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="zzZt-i6TT5fXaMIDJAb2-7" parent="1" style="rhombus;whiteSpace=wrap;html=1;" value="&lt;div&gt;If rooms[i].status&lt;/div&gt;&lt;div&gt;= FREE&lt;/div&gt;" vertex="1">
+          <mxGeometry height="70" width="144" x="239" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="jV23Sz9BFm9FaIYKXLZd-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="&lt;div&gt;rooms[i].status = RESERVED&lt;/div&gt;&lt;div&gt;room_reserve_today[i]++&lt;/div&gt;&lt;div&gt;rooms[i].reserve_tick = now&lt;/div&gt;" vertex="1">
+          <mxGeometry height="80" width="153" x="234.5" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="jV23Sz9BFm9FaIYKXLZd-2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="&lt;div&gt;rooms[i]目前有人&lt;/div&gt;&lt;div&gt;加入候補&lt;/div&gt;&lt;div&gt;room_waiting_count[i]++&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="140" x="60" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="jV23Sz9BFm9FaIYKXLZd-6" edge="1" parent="1" source="zzZt-i6TT5fXaMIDJAb2-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.993;entryY=0.402;entryDx=0;entryDy=0;entryPerimeter=0;" target="jV23Sz9BFm9FaIYKXLZd-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="2ReqnB4O_W-fBtRD3c_4-5" parent="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" value="Y" vertex="1">
+          <mxGeometry height="30" width="30" x="310" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="2ReqnB4O_W-fBtRD3c_4-6" parent="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" value="N" vertex="1">
+          <mxGeometry height="30" width="30" x="400" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="2ReqnB4O_W-fBtRD3c_4-7" parent="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" value="Y" vertex="1">
+          <mxGeometry height="30" width="30" x="310" y="390" as="geometry" />
+        </mxCell>
+        <mxCell id="2ReqnB4O_W-fBtRD3c_4-8" parent="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" value="N" vertex="1">
+          <mxGeometry height="30" width="30" x="209" y="320" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
