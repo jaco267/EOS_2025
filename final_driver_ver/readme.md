@@ -27,7 +27,8 @@ pi$ ./room_client
 pi$ echo "led 1" > /dev/etx_device
 pi$ echo "led 2" > /dev/etx_device
 pi$ echo "led 3" > /dev/etx_device
-pi$ echo "led -1" > /dev/etx_device
+#* 0 turn off 
+pi$ echo "led 0" > /dev/etx_device
 pi$ cat /dev/etx_device
 
 ```
@@ -38,14 +39,16 @@ pi$ cat /dev/etx_device
 - todo : button  
 - todo : rfid  
 
+
+#### led pin,  現在只要把 三個 led 接上 gpio14,15,18 就好了 (之後會當成 state(reserve, used, free), 但我還沒寫)
 ```
 pin 腳                          RPi gpio pin  
            gnd                      1  2                                
         g f | a b                   3  4                           
         | | | | |                   5  6 ---gnd                       
-         -------                    7  8 ---GPIO 14 (led6?)         
-        |   a   |                   9  10---GPIO 15 (led7?)         
-        | f   b |    GPIO 17  (a)---11 12---GPIO 18 (todo)       
+         -------                    7  8 ---GPIO 14 (led1)         
+        |   a   |                   9  10---GPIO 15 (led2)         
+        | f   b |    GPIO 17  (a)---11 12---GPIO 18 (led3)       
         |   G   |    GPIO 27  (b)---13 14                     
         | E   C |    GPIO 22  (c)---15 16                    
         |   D . |                   17 18                         
