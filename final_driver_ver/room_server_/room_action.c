@@ -1,5 +1,7 @@
 #include "room_action.h"
-
+#include <sys/types.h> // 新增：用於 ssize_t
+#include<unistd.h>
+#include <fcntl.h>
 // helper: status -> string
 const char* get_status_str(room_status_t status) {
     switch(status) {
@@ -46,9 +48,25 @@ char* get_all_status(int room_id) {
         strncat(resp, tmp, required_size - strlen(resp) - 1);
     }
     strncat(resp, "-------------------\n", required_size - strlen(resp) - 1);
-
-
+    if (room_id != -1){
+        int fd_write = open(DEVICE_FILE, O_WRONLY);
+        if (fd_write < 0) {
+            perror("Failed to open /dev/etx_device");
+            goto r_unlock; 
+        }
+        //todo  7seg , also add reserve, free, used  of led_id  not just set to 3  
+        char led_id_str[MAX_NAME_LEN];
+        int led_id = 3; //* 3,2,1   for reserve , free , used
+        snprintf(led_id_str, sizeof(led_id_str), "led %d", led_id);
+        // printf("Sending command: [%s]\n", led_id_str);
+        ssize_t ret = write(fd_write, led_id_str, strlen(led_id_str));
+        if (ret < 0) {
+            perror("Failed to write to the device");
+            close(fd_write);
+        }
+    }
     
+  r_unlock: 
     pthread_mutex_unlock(&room_mutex);
     return resp;
 }
