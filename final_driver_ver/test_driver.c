@@ -14,22 +14,23 @@ int main(int argc, char* argv[]){
   printf("--- Phase 1: Sending Command via WRITE ---\n");
   int fd_write = open(DEVICE_FILE, O_WRONLY);
   if (fd_write < 0) {perror("Failed to open /dev/etx_device");return 1;}
-  
-  char room_id_str[MAX_NAME_LEN];  
-  int room_id = 2; //* 0,1,2  
   //todo command 7seg 2  
-//   snprintf(room_id_str, sizeof(room_id_str), "7seg %d", room_id);
+  // snprintf(room_id_str, sizeof(room_id_str), "7seg %d", room_id);
+  
+  char led_id_str[MAX_NAME_LEN];  
 
-  snprintf(room_id_str, sizeof(room_id_str), "led %d", room_id);
-  printf("Sending command: [%s]\n", room_id_str);
-
-
-  ssize_t ret = write(fd_write, room_id_str, strlen(room_id_str));
-  if (ret < 0) {perror("Failed to write to the device");close(fd_write);return 1;}
+//   int led_id = 2; //* 1,2,3  
+  for(int led_id = 3; led_id>=1; led_id--){
+    snprintf(led_id_str, sizeof(led_id_str), "led %d", led_id);
+    printf("Sending command: [%s]\n", led_id_str);
+    ssize_t ret = write(fd_write, led_id_str, strlen(led_id_str));
+    if (ret < 0) {perror("Failed to write to the device");close(fd_write);return 1;}
+    usleep(1000000);  // 延遲 2 秒再顯示下一個
+  }
 
   close(fd_write);
-  usleep(2000000);  // 延遲 2 秒再顯示下一個
-  
+
+
   printf("\n--- Phase 2: Requesting Status via READ ---\n");
   int fd_read = open(DEVICE_FILE, O_RDONLY);
   if (fd_read < 0) {
