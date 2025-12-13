@@ -1,4 +1,3 @@
-
 - makefile 記得 linux kernel path 要改成自己電腦上的路徑   (不是 /home/elton/Desktop...)
 - scp 的路徑也要改成自己的設定 (不是 elton@192...)  
 
@@ -32,3 +31,27 @@ pi$ ./room_client
 - todo : led,  把 write device 加入 room_server 的 get room status 然後點亮 led   
 - todo : button  
 - todo : rfid  
+
+```
+pin 腳                        RPi gpio pin  
+           gnd                    1  2                                        
+        g f | a b                 3  4                                                                  
+        | | | | |                 5  6 ---gnd                                                            
+         -------                  7  8 ---GPIO 14 (led6?)                                                             
+        |   a   |                 9  10---GPIO 15 (led7?)                                                                    
+        | f   b |    GPIO 17(a)---11 12---GPIO 18 (todo)                                                                    
+        |   G   |    GPIO 27(b)---13 14                                                                
+        | E   C | GPIO 22(led1)---15 16                                                               
+        |   D . |                 17 18                                                                
+        --------- GPIO 10(led2)---19 20                                                              
+        | | | | |  GPIO 9(led3)---21 22                                                         
+        e d | c Dp GPIO 11(led4)--23 24                                                          
+           gnd                    25 26                                                             
+                   GPIO 0 (led5)--27 28               
+                     GPIO 5(f) ---29 30               
+                     GPIO 6(g) ---31 32               
+                                  33 34               
+                                  35 36 ---GPIO 16 (d)               
+                     GPIO 26(e)---37 38               
+                           gnd    39 40 ---GPIO 21 (c)
+```

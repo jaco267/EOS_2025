@@ -49,10 +49,7 @@ static ssize_t etx_read(struct file *filp, char __user *buf,
     size_t message_len = strlen(message);
     ssize_t ret;
     // 2. 處理檔案偏移量 (確保只讀取一次)
-    if (*off > 0) {
-        // 如果 offset 大於 0，表示已經讀取過了，回傳 0 代表檔案結尾 (EOF)
-        return 0;
-    }
+    if (*off > 0) {return 0;}// 如果 offset 大於 0，表示已經讀取過了，回傳 0 代表檔案結尾 (EOF)
     // 3. 確保使用者提供的緩衝區夠大
     if (message_len > len) {
         // if 要傳送的msg_len 大於使用者要求的長度，只傳送使用者要求的長度
