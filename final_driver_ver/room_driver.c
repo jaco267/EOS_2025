@@ -42,18 +42,51 @@ static int etx_release(struct inode *inode, struct file *file){
 
 //! when we $ cat /dev/etx_device
 // ext_read is called when we read the Device file
+// static ssize_t etx_read(struct file *filp, char __user *buf, 
+//     size_t len, loff_t *off){
+//   uint8_t room_state = 0; //todo implement this 
+//   //write to user
+//   len = 1;
+//   if( copy_to_user(buf, &room_state, len) > 0) {
+//     pr_err("ERROR: Not all the bytes have been copied to user\n");
+//   }
+//   pr_info("Read function : room state (todo) = %d \n", room_state);
+//   return 0;
+// }
+// etx_read is called when we read the Device file
 static ssize_t etx_read(struct file *filp, char __user *buf, 
     size_t len, loff_t *off){
-  uint8_t room_state = 0; //todo implement this 
-  //write to user
-  len = 1;
-  if( copy_to_user(buf, &room_state, len) > 0) {
-    pr_err("ERROR: Not all the bytes have been copied to user\n");
-  }
-  pr_info("Read function : room state (todo) = %d \n", room_state);
-  return 0;
+    // 1. 在核心空間定義要回傳的字串
+    const char *message = "hello world\n"; // 包含換行符
+    size_t message_len = strlen(message);
+    ssize_t ret;
+    // 2. 處理檔案偏移量 (確保只讀取一次)
+    if (*off > 0) {
+        // 如果 offset 大於 0，表示已經讀取過了，回傳 0 代表檔案結尾 (EOF)
+        return 0;
+    }
+    // 3. 確保使用者提供的緩衝區夠大
+    if (message_len > len) {
+        // if 要傳送的msg_len > 使用者要求的長度，只傳送使用者要求的長度
+        // 在這裡，為簡單起見，我們假設緩衝區夠大，或者只傳送部分
+        // ret = len; 
+        // 為了確保完整字串傳輸，通常 Client 應提供足夠空間，但此處我們取兩者最小值。
+        ret = (message_len < len) ? message_len : len;
+    } else {
+        ret = message_len;
+    }
+    // 4. 將字串從核心空間複製到使用者空間
+    // copy_to_user(目標使用者緩衝區, 來源核心變數, 位元組數)
+    // 成功時回傳 0，失敗時回傳未複製的位元組數 (> 0)
+    if( copy_to_user(buf, message, ret) > 0) {
+        pr_err("ERROR: Not all the bytes have been copied to user\n");
+        return -EFAULT; // 回傳標準 I/O 錯誤碼
+    }
+    *off += ret; // 5. 更新檔案偏移量 (重要)
+    pr_info("Read function: Sent '%s', length %zd.\n", message, ret);
+    // 6. 回傳實際複製的位元組數
+    return ret; // <--- 必須回傳實際複製的位元組數 (在這裡是 message_len)
 }
-
 //! When we call echo (0 or 1) > /dev/ext_device
 // This function will be called when we write the Device file
 static ssize_t etx_write(struct file *filp,

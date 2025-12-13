@@ -1,3 +1,7 @@
+
+- makefile 記得 linux kernel path 要改成自己電腦上的路徑   (不是 /home/elton/Desktop...)
+- scp 的路徑也要改成自己的設定 (不是 elton@192...)  
+
 ```sh
 make clean
 make  
@@ -10,5 +14,6 @@ pi$ dmesg |tail -n 10
 
 #### usser space program   
 pi$ make room_client
+pi$ sudo su 
 pi$ ./room_client 
 ```
