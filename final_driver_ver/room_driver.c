@@ -41,22 +41,10 @@ static int etx_release(struct inode *inode, struct file *file){
 }
 
 //! when we $ cat /dev/etx_device
-// ext_read is called when we read the Device file
-// static ssize_t etx_read(struct file *filp, char __user *buf, 
-//     size_t len, loff_t *off){
-//   uint8_t room_state = 0; //todo implement this 
-//   //write to user
-//   len = 1;
-//   if( copy_to_user(buf, &room_state, len) > 0) {
-//     pr_err("ERROR: Not all the bytes have been copied to user\n");
-//   }
-//   pr_info("Read function : room state (todo) = %d \n", room_state);
-//   return 0;
-// }
 // etx_read is called when we read the Device file
 static ssize_t etx_read(struct file *filp, char __user *buf, 
     size_t len, loff_t *off){
-    // 1. 在核心空間定義要回傳的字串
+    // 1. 在kernel space 定義要回傳的字串
     const char *message = "hello world\n"; // 包含換行符
     size_t message_len = strlen(message);
     ssize_t ret;
@@ -67,7 +55,7 @@ static ssize_t etx_read(struct file *filp, char __user *buf,
     }
     // 3. 確保使用者提供的緩衝區夠大
     if (message_len > len) {
-        // if 要傳送的msg_len > 使用者要求的長度，只傳送使用者要求的長度
+        // if 要傳送的msg_len 大於使用者要求的長度，只傳送使用者要求的長度
         // 在這裡，為簡單起見，我們假設緩衝區夠大，或者只傳送部分
         // ret = len; 
         // 為了確保完整字串傳輸，通常 Client 應提供足夠空間，但此處我們取兩者最小值。

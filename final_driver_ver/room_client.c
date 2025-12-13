@@ -1,58 +1,59 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
-#include<unistd.h>
-#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 
-#include <errno.h> // 新增：用於 perror 顯示錯誤
-#include <sys/types.h> // 新增：用於 ssize_t
-#define MAX_NAME_LEN 30 
-#define DEVICE_FILE "/dev/etx_device"
-#define READ_BUFFER_SIZE 2048 // 讀取狀態的緩衝區大小
+#define SERVER_IP "127.0.0.1"
+#define PORT 8080
+#define BUFFER_SIZE 2048
 
-int main(int argc, char* argv[]){
-  printf("--- Phase 1: Sending Command via WRITE ---\n");
-  int fd_write = open(DEVICE_FILE, O_WRONLY);
-  if (fd_write < 0) {perror("Failed to open /dev/etx_device");return 1;}
-  
-  char room_id_str[MAX_NAME_LEN];  
-  int room_id = 2; //* 0,1,2  
-  //* command 7seg 2  
-  snprintf(room_id_str, sizeof(room_id_str), "7seg %d", room_id);
-  printf("Sending command: [%s]\n", room_id_str);
+void run_client() {
+    int sock = 0;
+    struct sockaddr_in serv_addr;
+    char buffer[BUFFER_SIZE] = {0};
+    char command[100];
+    printf("--- Smart Room Reservation Client ---\n");
+    printf("Commands:\n");
+    printf("status - Get all room statuses.\n");
+    printf("reserve <id> - Reserve a room (e.g., reserve 0).\n");
+    printf("checkin <id> - Check-in to a reserved room.\n");
+    printf("release <id> - Manually release a room.\n");
+    printf("extend <id> - Extend an IN_USE room once.\n");
+    printf("exit - Exit the client.\n");
+    printf("-------------------------------------\n");
+    while (1) {
+        printf("\nEnter command: ");
+        if (fgets(command, sizeof(command), stdin) == NULL) {   break;}
+        command[strcspn(command, "\n")] = 0;  // 移除換行符 
+        if (strcasecmp(command, "exit") == 0) {printf("Exiting client.\n");break;}
+        // 1. 創建 client socket fd
+        if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) { perror("\nSocket creation error");continue;}
+        serv_addr.sin_family = AF_INET;
+        serv_addr.sin_port = htons(PORT);
+        // 轉換 IP 位址從文字到二進制格式
+        if (inet_pton(AF_INET, SERVER_IP, &serv_addr.sin_addr) <= 0) {
+            printf("\nInvalid address/ Address not supported \n"); close(sock);
+            continue;
+        }
+        // 2. connect to server
+        if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+            perror("Connection Failed"); close(sock);
+            sleep(1); // 由於伺服器可能還未啟動，這裡不應直接退出 
+            continue;
+        }
+        send(sock, command, strlen(command), 0); // 3. 發送命令
+        // 4. 接收回應
+        memset(buffer, 0, BUFFER_SIZE);
+        int valread = read(sock, buffer, BUFFER_SIZE - 1);
+        if (valread > 0) {printf("\n--- Server Response ---\n%s\n-----------------------\n", buffer);
+        } else {          printf("\nError: Server disconnected or failed to read response.\n");}
+        close(sock);// 5. 關閉 socket
+    }
+}
 
-
-  ssize_t ret = write(fd_write, room_id_str, strlen(room_id_str));
-  if (ret < 0) {perror("Failed to write to the device");close(fd_write);return 1;}
-
-  close(fd_write);
-  usleep(2000000);  // 延遲 2 秒再顯示下一個
-  
-  printf("\n--- Phase 2: Requesting Status via READ ---\n");
-  int fd_read = open(DEVICE_FILE, O_RDONLY);
-  if (fd_read < 0) {
-      perror("Failed to open device for READ");
-      return 1;
-  }
-
-  char read_buffer[READ_BUFFER_SIZE] = {0};
-  // read()，執行driver 的 etx_read()
-  ssize_t bytes_read = read(fd_read, read_buffer, READ_BUFFER_SIZE - 1);
-  
-  if (bytes_read > 0) {
-      read_buffer[bytes_read] = '\0';
-      printf("Read successful. Received %zd bytes:\n", bytes_read);
-      printf("------------------------------------------\n");
-      printf("%s\n", read_buffer); // 印出驅動程式返回的狀態
-      printf("------------------------------------------\n");
-  } else if (bytes_read == 0) {
-      printf("Read 0 bytes. End of file/buffer, or driver returned nothing.\n");
-  } else {
-      perror("Failed to read from the device");
-      close(fd_read);
-      return 1;
-  }
-  
-  close(fd_read);
-  return 0; 
+int main() {
+    run_client();
+    return 0;
 }

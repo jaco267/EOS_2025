@@ -4,7 +4,7 @@
 
 ```sh
 make clean
-make  
+make 
 scp -r ../final_driver_ver   elton@192.168.222.222:~/Desktop
 pi$ cd ~/Desktop/final_driver_ver
 pi$ sudo insmod room_driver.ko  
@@ -12,8 +12,16 @@ pi$ sudo insmod room_driver.ko
 pi$ lsmod | grep room_driver
 pi$ dmesg |tail -n 10
 
-#### usser space program   
-pi$ make room_client
+#### user space program   
+pi$ make user
 pi$ sudo su 
-pi$ ./room_client 
+pi$ ./test_driver    
+##### run server 
+pi$ ./room_server
+pi$ ./room_client   
+#* status
+#* reserve 0 
+#* checkin 0  
+#* status 
+
 ```
