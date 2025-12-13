@@ -22,12 +22,14 @@ int main(int argc, char* argv[]){
 //   int led_id = 2; //* 1,2,3  
   for(int led_id = 3; led_id>=1; led_id--){
     snprintf(led_id_str, sizeof(led_id_str), "led %d", led_id);
-    printf("Sending command: [%s]\n", led_id_str);
     ssize_t ret = write(fd_write, led_id_str, strlen(led_id_str));
     if (ret < 0) {perror("Failed to write to the device");close(fd_write);return 1;}
-    usleep(1000000);  // 延遲 2 秒再顯示下一個
+    usleep(1000000);  // 延遲 1s 再顯示下一個
   }
-
+  
+  snprintf(led_id_str, sizeof(led_id_str), "7seg 159adg");
+  ssize_t ret = write(fd_write, led_id_str, strlen(led_id_str));
+  if (ret < 0) {perror("Failed to write to the device");close(fd_write);return 1;}
   close(fd_write);
 
 

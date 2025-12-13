@@ -126,12 +126,12 @@ static ssize_t etx_read(struct file *filp, char __user *buf,
     current_pos += snprintf(kernel_buffer + current_pos, 
                             sizeof(kernel_buffer) - current_pos, "leds state:");
     // 迴圈讀取並格式化每個 LED 狀態
-    for (int i = 0; i < NUM_LEDS; i++) {
-        uint8_t state = gpio_get_value(led_gpios[i]);
+    for (int i = 0; i < NUM_GPIOS; i++) { //All_gpios[NUM_GPIOS]
+        uint8_t state = gpio_get_value(All_gpios[i]);
         // 追加每個 GPIO 的狀態到字串中
         current_pos += snprintf(kernel_buffer + current_pos, sizeof(kernel_buffer) - current_pos, 
-                                " GPIO_%d:%d%s",  led_gpios[i], state, 
-                                (i == NUM_LEDS - 1) ? "\n" : ","); // 最後一個後面接換行，否則接逗號
+                                " GPIO_%d:%d%s",  All_gpios[i], state, 
+                                (i == NUM_GPIOS - 1) ? "\n" : ","); // 最後一個後面接換行，否則接逗號
         if (current_pos >= sizeof(kernel_buffer) - 1) { // 檢查是否超過核心緩衝區大小
              pr_warn("Read buffer overflow detected in snprintf.\n");
              break; 
@@ -205,7 +205,7 @@ static ssize_t etx_write(struct file *filp,
     }else if (arg[0]=='2'){  led_map_idx = 2;
     }else if (arg[0]=='3'){  led_map_idx = 3;
     }else{ pr_info("LED0 turned OFF\n");}
-    for(int j=0; j<3 ; j++){
+    for(int j=0; j<NUM_LEDS ; j++){
         int bit = (ledmap[led_map_idx]>>j) & 0x01;  
         gpio_set_value(led_gpios[j], bit);
     }
