@@ -2,9 +2,12 @@
 - scp 的路徑也要改成自己的設定 (不是 elton@192...)  
 
 ```sh
+
 make clean
 make 
 scp -r ../final_driver_ver   elton@192.168.222.222:~/Desktop
+
+ssh elton@192.168.222.222
 pi$ cd ~/Desktop/final_driver_ver
 pi$ sudo insmod room_driver.ko  
 #    sudo rmmod room_driver.ko
@@ -15,13 +18,17 @@ pi$ dmesg |tail -n 10
 pi$ make user
 pi$ sudo su 
 pi$ ./test_driver    
+# turn off led 
+pi$ echo "led 0" > /dev/etx_device
 ##### run server 
 pi$ ./room_server
 pi$ ./room_client   
 #* status
-#* status  0    #只單純查看房間0 的狀態  
+#* status  0    #只單純查看房間0 的狀態 led1 亮起 代表 free  
 #* reserve 0 
-#* checkin 0  
+#* status  0    五秒內  可以看到 led 2 亮起 代表 reserved  
+#* checkin 0    五秒內
+#* status  0    可以看到 led 3 亮起
 #* status 
 
 pi$ echo "led 1" > /dev/etx_device

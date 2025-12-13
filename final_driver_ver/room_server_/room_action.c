@@ -49,6 +49,10 @@ char* get_all_status(int room_id) {
     }
     strncat(resp, "-------------------\n", required_size - strlen(resp) - 1);
     if (room_id != -1){
+        if (room_id >= MAX_ROOMS){
+            perror("Failed : room_id >= MAX_ROOMS");
+            goto r_unlock;
+        }
         int fd_write = open(DEVICE_FILE, O_WRONLY);
         if (fd_write < 0) {
             perror("Failed to open /dev/etx_device");
@@ -56,7 +60,9 @@ char* get_all_status(int room_id) {
         }
         //todo  7seg , also add reserve, free, used  of led_id  not just set to 3  
         char led_id_str[MAX_NAME_LEN];
-        int led_id = 3; //* 3,2,1   for reserve , free , used
+
+        int led_id;
+        led_id = rooms[room_id].status+1; //* 3,2,1   for used, reserve , free  
         snprintf(led_id_str, sizeof(led_id_str), "led %d", led_id);
         // printf("Sending command: [%s]\n", led_id_str);
         ssize_t ret = write(fd_write, led_id_str, strlen(led_id_str));
