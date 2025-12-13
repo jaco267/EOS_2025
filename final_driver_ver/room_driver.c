@@ -32,9 +32,19 @@ pin 腳                          RPi gpio pin
                      GPIO 26(led)---37 38               
                              gnd    39 40 ---GPIO 21 (led)
 */
+
 #define GPIO_14 (14) //led 
 #define GPIO_15 (15) //led 
 #define GPIO_18 (18) //led
+#define NUM_LEDS 3   
+static const int led_gpios[NUM_LEDS] = {GPIO_14, GPIO_15, GPIO_18};
+static char ledmap[4] = {
+    0b000,
+    0b001, 
+    0b010,
+    0b100
+};
+
 
 dev_t dev = 0;
 static struct class *dev_class;
@@ -70,53 +80,39 @@ static int etx_release(struct inode *inode, struct file *file){
 // etx_read is called when we read the Device file
 static ssize_t etx_read(struct file *filp, char __user *buf, 
     size_t len, loff_t *off){
-    
-    // 核心緩衝區：用於儲存格式化後的 GPIO 狀態字串
-    // 假設我們需要足夠的空間儲存 "GPIO_14:1, GPIO_15:0, GPIO_18:1\n"
-    char kernel_buffer[128]; 
-    size_t required_len;
+    char kernel_buffer[256]; // store GPIO status string 
+    int current_pos = 0; // 追蹤目前寫入到 buffer 的位置
     ssize_t ret;
-    
-    // 1. 讀取 GPIO 狀態
-    uint8_t state_14 = gpio_get_value(GPIO_14);
-    uint8_t state_15 = gpio_get_value(GPIO_15);
-    uint8_t state_18 = gpio_get_value(GPIO_18);
-    
-    // 2. 格式化結果字串
-    // 將多個狀態值格式化到 kernel_buffer 中
-    required_len = snprintf(kernel_buffer, sizeof(kernel_buffer), 
-                            "leds:  GPIO_14:%d, GPIO_15:%d, GPIO_18:%d\n", 
-                            state_14, state_15, state_18);
-    
-    // 處理檔案偏移量 (確保只讀取一次)
-    if (*off > 0) {
-        return 0; // 如果 offset 大於 0，表示已經讀取過了，回傳 0 代表檔案結尾 (EOF)
+    // 1. 處理檔案偏移量 (確保只讀取一次)
+    if (*off > 0) {return 0;} // 如果 offset 大於 0，表示已經讀取過了，回傳 0 代表檔案結尾 (EOF)
+    // 2. 格式化結果字串 寫入開頭標籤
+    current_pos += snprintf(kernel_buffer + current_pos, 
+                            sizeof(kernel_buffer) - current_pos, "leds state:");
+    // 迴圈讀取並格式化每個 LED 狀態
+    for (int i = 0; i < NUM_LEDS; i++) {
+        uint8_t state = gpio_get_value(led_gpios[i]);
+        // 追加每個 GPIO 的狀態到字串中
+        current_pos += snprintf(kernel_buffer + current_pos, sizeof(kernel_buffer) - current_pos, 
+                                " GPIO_%d:%d%s",  led_gpios[i], state, 
+                                (i == NUM_LEDS - 1) ? "\n" : ","); // 最後一個後面接換行，否則接逗號
+        if (current_pos >= sizeof(kernel_buffer) - 1) { // 檢查是否超過核心緩衝區大小
+             pr_warn("Read buffer overflow detected in snprintf.\n");
+             break; 
+        }
     }
-
-    // 3. 確定實際要傳送的位元組數
-    if (required_len > len) {
-        // 如果格式化後的字串長度超過使用者提供的緩衝區大小 (len)，則截斷
-        ret = len; 
-    } else {
-        ret = required_len;
-    }
-    
+    size_t required_len = current_pos;
+    // 3. 確定實際要傳送的位元組數 (與使用者提供的緩衝區長度 len 比較)
+    if (required_len > len) {   ret = len; 
+    } else {  ret = required_len;}
     // 4. 將字串從核心空間複製到使用者空間
-    // copy_to_user(目標使用者緩衝區, 來源核心變數, 位元組數)
-    if( copy_to_user(buf, kernel_buffer, ret) > 0) {
+    if( copy_to_user(buf, kernel_buffer, ret) > 0) { // copy_to_user(目標使用者緩衝區, 來源核心變數, 位元組數)
         pr_err("ERROR: Not all the bytes have been copied to user\n");
         return -EFAULT; // 回傳標準 I/O 錯誤碼
     }
-    
-    // 5. 更新檔案偏移量 (重要)
-    *off += ret;
-    
-    pr_info("Read function: Sent GPIO states: '%s', length %zd.\n", kernel_buffer, ret);
-    
-    // 6. 回傳實際複製的位元組數
-    return ret; 
+    *off += ret; // 5. 更新檔案偏移量 (重要)
+    pr_info("Read function: Sent GPIO states, length %zd.\n", ret);
+    return ret; // 6. 回傳實際複製的位元組數 
 }
-
 //! When we call echo (0 or 1) > /dev/ext_device
 // This function will be called when we write the Device file
 static ssize_t etx_write(struct file *filp,
@@ -141,23 +137,14 @@ static ssize_t etx_write(struct file *filp,
         pr_err("No 7seg argument provided\n");
         return len;
     }
-    if (arg[0]== '1')  {
-        gpio_set_value(GPIO_14, 1); // 假設 LED 接在 GPIO22
-        gpio_set_value(GPIO_15, 0);
-        gpio_set_value(GPIO_18, 0);
-    }else if (arg[0]=='2'){
-        gpio_set_value(GPIO_14 ,0);
-        gpio_set_value(GPIO_15 ,1);
-        gpio_set_value(GPIO_18 ,0);
-    }else if (arg[0]=='3'){
-        gpio_set_value(GPIO_14 ,0);
-        gpio_set_value(GPIO_15 ,0);
-        gpio_set_value(GPIO_18 ,1);
-    }else{
-        gpio_set_value(GPIO_14 ,0);
-        gpio_set_value(GPIO_15 ,0);
-        gpio_set_value(GPIO_18 ,0);
-        pr_info("LED0 turned OFF\n");
+    int led_map_idx = 0; 
+    if (arg[0]== '1')  {     led_map_idx = 1; 
+    }else if (arg[0]=='2'){  led_map_idx = 2;
+    }else if (arg[0]=='3'){  led_map_idx = 3;
+    }else{ pr_info("LED0 turned OFF\n");}
+    for(int j=0; j<3 ; j++){
+        int bit = (ledmap[led_map_idx]>>j) & 0x01;  
+        gpio_set_value(led_gpios[j], bit);
     }
   }
   return len;
@@ -188,34 +175,31 @@ static int __init etx_driver_init(void){
     pr_err( "Cannot create the Device \n");
     goto r_device;
   }
-  if(!gpio_is_valid(GPIO_14)||
-     !gpio_is_valid(GPIO_15)||
-     !gpio_is_valid(GPIO_18)
-    ){//Checking the GPIO is valid or not
-    pr_err("GPIO is not valid\n");
-    goto r_device;
+  for (int i = 0; i < NUM_LEDS; i++){
+    if(!gpio_is_valid(led_gpios[i])){
+        pr_err("GPIO is not valid\n");
+        goto r_device;
+    }
   }
   //Requesting the GPIO
-  if(gpio_request(GPIO_14,"GPIO_14") < 0 ||
-     gpio_request(GPIO_15,"GPIO_15") < 0 ||
-     gpio_request(GPIO_18,"GPIO_18") < 0 
-    ){
-    pr_err("ERROR: GPIO request failed\n");
-    goto r_gpio;
+  char gpio_label[10]; // 用來存放 "GPIO_XX" 的標籤
+  for (int i = 0; i < NUM_LEDS; i++){
+    snprintf(gpio_label, sizeof(gpio_label), "GPIO_%d", led_gpios[i]);
+    if (gpio_request(led_gpios[i], gpio_label) < 0){
+        pr_err("ERROR: GPIO request failed\n");
+        goto r_gpio;
+    }
   }
-  gpio_direction_output(GPIO_14,0);
-  gpio_direction_output(GPIO_15,0);
-  gpio_direction_output(GPIO_18,0);
-
-  gpio_export(GPIO_14,false);
-  gpio_export(GPIO_15,false);
-  gpio_export(GPIO_18,false);
+  for (int i = 0; i < NUM_LEDS; i++){
+    gpio_direction_output(led_gpios[i],0);  
+    gpio_export(led_gpios[i],false);
+  }
   pr_info("Device Driver Insert...Done!!!\n");
   return 0;
   r_gpio:
-    gpio_free(GPIO_14);
-    gpio_free(GPIO_15);
-    gpio_free(GPIO_18);
+    for (int i = 0; i < NUM_LEDS; i++){
+        gpio_free(led_gpios[i]);
+    }
   r_device:
     device_destroy(dev_class,dev);
   r_class:
@@ -229,13 +213,10 @@ static int __init etx_driver_init(void){
 
 // Module exit function
 static void __exit etx_driver_exit(void){
-  gpio_unexport(GPIO_14);
-  gpio_unexport(GPIO_15);
-  gpio_unexport(GPIO_18);
-  gpio_free(GPIO_14);
-  gpio_free(GPIO_15);
-  gpio_free(GPIO_18);
-
+  for (int i = 0; i < NUM_LEDS; i++){
+    gpio_unexport(led_gpios[i]);
+    gpio_free(led_gpios[i]);
+  }    
   device_destroy(dev_class,dev);
   class_destroy(dev_class);
   cdev_del(&etx_cdev);
