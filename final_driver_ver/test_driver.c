@@ -17,8 +17,10 @@ int main(int argc, char* argv[]){
   
   char room_id_str[MAX_NAME_LEN];  
   int room_id = 2; //* 0,1,2  
-  //* command 7seg 2  
-  snprintf(room_id_str, sizeof(room_id_str), "7seg %d", room_id);
+  //todo command 7seg 2  
+//   snprintf(room_id_str, sizeof(room_id_str), "7seg %d", room_id);
+
+  snprintf(room_id_str, sizeof(room_id_str), "led %d", room_id);
   printf("Sending command: [%s]\n", room_id_str);
 
 

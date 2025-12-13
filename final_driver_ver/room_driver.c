@@ -9,6 +9,32 @@
 #include <linux/uaccess.h> //copy_to/from_user()
 #include <linux/gpio.h> //GPIO
 
+/*
+pin 腳                          RPi gpio pin  
+           gnd                      1  2                                
+        g f | a b                   3  4                           
+        | | | | |                   5  6 ---gnd                       
+         -------                    7  8 ---GPIO 14 (led6?)         
+        |   a   |                   9  10---GPIO 15 (led7?)         
+        | f   b |    GPIO 17  (a)---11 12---GPIO 18 (todo)       
+        |   G   |    GPIO 27  (b)---13 14                     
+        | E   C |    GPIO 22  (c)---15 16                    
+        |   D . |                   17 18                         
+        ---------    GPIO 10  (d)---19 20                     
+        | | | | |    GPIO  9  (e)---21 22                   
+        e d | c Dp   GPIO 11  (f)---23 24             
+           gnd                      25 26             
+                     GPIO  0  (g)---27 28               
+                     GPIO  5(led)---29 30               
+                     GPIO  6(led)---31 32               
+                                    33 34               
+                                    35 36 ---GPIO 16 (led)               
+                     GPIO 26(led)---37 38               
+                             gnd    39 40 ---GPIO 21 (led)
+*/
+#define GPIO_14 (14) //led 
+#define GPIO_15 (15) //led 
+#define GPIO_18 (18) //led
 
 dev_t dev = 0;
 static struct class *dev_class;
@@ -42,36 +68,86 @@ static int etx_release(struct inode *inode, struct file *file){
 
 //! when we $ cat /dev/etx_device
 // etx_read is called when we read the Device file
+// static ssize_t etx_read(struct file *filp, char __user *buf, 
+//     size_t len, loff_t *off){
+    
+//     const char *message = "hello world\n"; // kernel space 要回傳的string
+//     size_t message_len = strlen(message);
+//     ssize_t ret;
+//     // 2. 處理檔案偏移量 (確保只讀取一次)
+//     if (*off > 0) {return 0;}// 如果 offset 大於 0，表示已經讀取過了，回傳 0 代表檔案結尾 (EOF)
+//     // 3. 確保使用者提供的緩衝區夠大
+//     if (message_len > len) {
+//         // if 要傳送的msg_len 大於使用者要求的長度，只傳送使用者要求的長度
+//         // 在這裡，為簡單起見，我們假設緩衝區夠大，或者只傳送部分
+//         // ret = len; 
+//         // 為了確保完整字串傳輸，通常 Client 應提供足夠空間，但此處我們取兩者最小值。
+//         ret = (message_len < len) ? message_len : len;
+//     } else {
+//         ret = message_len;
+//     }
+//     // 4. 將字串從核心空間複製到使用者空間
+//     // copy_to_user(目標使用者緩衝區, 來源核心變數, 位元組數)
+//     // 成功時回傳 0，失敗時回傳未複製的位元組數 (> 0)
+//     if( copy_to_user(buf, message, ret) > 0) {
+//         pr_err("ERROR: Not all the bytes have been copied to user\n");
+//         return -EFAULT; // 回傳標準 I/O 錯誤碼
+//     }
+//     *off += ret; // 5. 更新檔案偏移量 (重要)
+//     pr_info("Read function: Sent '%s', length %zd.\n", message, ret);
+//     // 6. 回傳實際複製的位元組數
+//     return ret; // <--- 必須回傳實際複製的位元組數 (在這裡是 message_len)
+// }
+// etx_read is called when we read the Device file
 static ssize_t etx_read(struct file *filp, char __user *buf, 
     size_t len, loff_t *off){
-    // 1. 在kernel space 定義要回傳的字串
-    const char *message = "hello world\n"; // 包含換行符
-    size_t message_len = strlen(message);
+    
+    // 核心緩衝區：用於儲存格式化後的 GPIO 狀態字串
+    // 假設我們需要足夠的空間儲存 "GPIO_14:1, GPIO_15:0, GPIO_18:1\n"
+    char kernel_buffer[128]; 
+    size_t required_len;
     ssize_t ret;
-    // 2. 處理檔案偏移量 (確保只讀取一次)
-    if (*off > 0) {return 0;}// 如果 offset 大於 0，表示已經讀取過了，回傳 0 代表檔案結尾 (EOF)
-    // 3. 確保使用者提供的緩衝區夠大
-    if (message_len > len) {
-        // if 要傳送的msg_len 大於使用者要求的長度，只傳送使用者要求的長度
-        // 在這裡，為簡單起見，我們假設緩衝區夠大，或者只傳送部分
-        // ret = len; 
-        // 為了確保完整字串傳輸，通常 Client 應提供足夠空間，但此處我們取兩者最小值。
-        ret = (message_len < len) ? message_len : len;
-    } else {
-        ret = message_len;
+    
+    // 1. 讀取 GPIO 狀態
+    uint8_t state_14 = gpio_get_value(GPIO_14);
+    uint8_t state_15 = gpio_get_value(GPIO_15);
+    uint8_t state_18 = gpio_get_value(GPIO_18);
+    
+    // 2. 格式化結果字串
+    // 將多個狀態值格式化到 kernel_buffer 中
+    required_len = snprintf(kernel_buffer, sizeof(kernel_buffer), 
+                            "GPIO_14:%d, GPIO_15:%d, GPIO_18:%d\n", 
+                            state_14, state_15, state_18);
+    
+    // 處理檔案偏移量 (確保只讀取一次)
+    if (*off > 0) {
+        return 0; // 如果 offset 大於 0，表示已經讀取過了，回傳 0 代表檔案結尾 (EOF)
     }
+
+    // 3. 確定實際要傳送的位元組數
+    if (required_len > len) {
+        // 如果格式化後的字串長度超過使用者提供的緩衝區大小 (len)，則截斷
+        ret = len; 
+    } else {
+        ret = required_len;
+    }
+    
     // 4. 將字串從核心空間複製到使用者空間
     // copy_to_user(目標使用者緩衝區, 來源核心變數, 位元組數)
-    // 成功時回傳 0，失敗時回傳未複製的位元組數 (> 0)
-    if( copy_to_user(buf, message, ret) > 0) {
+    if( copy_to_user(buf, kernel_buffer, ret) > 0) {
         pr_err("ERROR: Not all the bytes have been copied to user\n");
         return -EFAULT; // 回傳標準 I/O 錯誤碼
     }
-    *off += ret; // 5. 更新檔案偏移量 (重要)
-    pr_info("Read function: Sent '%s', length %zd.\n", message, ret);
+    
+    // 5. 更新檔案偏移量 (重要)
+    *off += ret;
+    
+    pr_info("Read function: Sent GPIO states: '%s', length %zd.\n", kernel_buffer, ret);
+    
     // 6. 回傳實際複製的位元組數
-    return ret; // <--- 必須回傳實際複製的位元組數 (在這裡是 message_len)
+    return ret; 
 }
+
 //! When we call echo (0 or 1) > /dev/ext_device
 // This function will be called when we write the Device file
 static ssize_t etx_write(struct file *filp,
@@ -85,12 +161,36 @@ static ssize_t etx_write(struct file *filp,
     return -EFAULT;
   }
   rec_buf[len] = '\0';  // 確保結尾有 '\0'
-  pr_info("Received room ID: %s\n", rec_buf);
+  pr_info("Received cmd: %s\n", rec_buf);
 
   // 解析指令，例如 "7seg A" 或 "led0 on"
   sscanf(rec_buf, "%15s %15s", cmd, arg);
   pr_info("Command: [%s], Arg: [%s]\n", cmd, arg);
   //todo -- 控制 7-segment ---
+  if(strcmp(cmd, "led")==0){ //* 控制 led  
+    if (strlen(arg) == 0) {
+        pr_err("No 7seg argument provided\n");
+        return len;
+    }
+    if (arg[0]== '1')  {
+        gpio_set_value(GPIO_14, 1); // 假設 LED 接在 GPIO22
+        gpio_set_value(GPIO_15, 0);
+        gpio_set_value(GPIO_18, 0);
+    }else if (arg[0]=='2'){
+        gpio_set_value(GPIO_14 ,0);
+        gpio_set_value(GPIO_15 ,1);
+        gpio_set_value(GPIO_18 ,0);
+    }else if (arg[0]=='3'){
+        gpio_set_value(GPIO_14 ,0);
+        gpio_set_value(GPIO_15 ,0);
+        gpio_set_value(GPIO_18 ,1);
+    }else{
+        gpio_set_value(GPIO_14 ,0);
+        gpio_set_value(GPIO_15 ,0);
+        gpio_set_value(GPIO_18 ,0);
+        pr_info("LED0 turned OFF\n");
+    }
+  }
   return len;
 }
 
@@ -119,8 +219,34 @@ static int __init etx_driver_init(void){
     pr_err( "Cannot create the Device \n");
     goto r_device;
   }
+  if(!gpio_is_valid(GPIO_14)||
+     !gpio_is_valid(GPIO_15)||
+     !gpio_is_valid(GPIO_18)
+    ){//Checking the GPIO is valid or not
+    pr_err("GPIO is not valid\n");
+    goto r_device;
+  }
+  //Requesting the GPIO
+  if(gpio_request(GPIO_14,"GPIO_14") < 0 ||
+     gpio_request(GPIO_15,"GPIO_15") < 0 ||
+     gpio_request(GPIO_18,"GPIO_18") < 0 
+    ){
+    pr_err("ERROR: GPIO request failed\n");
+    goto r_gpio;
+  }
+  gpio_direction_output(GPIO_14,0);
+  gpio_direction_output(GPIO_15,0);
+  gpio_direction_output(GPIO_18,0);
+
+  gpio_export(GPIO_14,false);
+  gpio_export(GPIO_15,false);
+  gpio_export(GPIO_18,false);
   pr_info("Device Driver Insert...Done!!!\n");
   return 0;
+  r_gpio:
+    gpio_free(GPIO_14);
+    gpio_free(GPIO_15);
+    gpio_free(GPIO_18);
   r_device:
     device_destroy(dev_class,dev);
   r_class:
@@ -134,6 +260,13 @@ static int __init etx_driver_init(void){
 
 // Module exit function
 static void __exit etx_driver_exit(void){
+  gpio_unexport(GPIO_14);
+  gpio_unexport(GPIO_15);
+  gpio_unexport(GPIO_18);
+  gpio_free(GPIO_14);
+  gpio_free(GPIO_15);
+  gpio_free(GPIO_18);
+
   device_destroy(dev_class,dev);
   class_destroy(dev_class);
   cdev_del(&etx_cdev);
