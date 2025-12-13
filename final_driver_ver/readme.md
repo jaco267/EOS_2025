@@ -25,3 +25,8 @@ pi$ ./room_client
 #* status 
 
 ```
+
+- 現在 還沒有把 room_server  和 driver 整合   
+- todo : led,  把 write device 加入 room_server 的 get room status 然後點亮 led   
+- todo : button  
+- todo : rfid  
