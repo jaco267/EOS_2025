@@ -193,7 +193,7 @@ static ssize_t etx_write(struct file *filp,
         gpio_set_value(seg7_gpios[j], bit);
       }
       pr_info("Displaying [%c] on 7-segment\n", arg[i]);
-      msleep(1000); // 延遲 1 秒再顯示下一個
+      if (i < (strlen(arg)-1))  msleep(1000); // 延遲 1 秒再顯示下一個
     }
   }else if(strcmp(cmd, "led")==0){ //* 控制 led  
     if (strlen(arg) == 0) {
