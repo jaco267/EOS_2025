@@ -36,6 +36,20 @@ pin 腳                          RPi gpio pin
 #define GPIO_14 (14) //led 
 #define GPIO_15 (15) //led 
 #define GPIO_18 (18) //led
+//7seg  
+#define GPIO_17 (17) //a 
+#define GPIO_27 (27) //b 
+#define GPIO_21 (22) //C
+#define GPIO_16 (10) //D 
+#define GPIO_26  (9) //E 
+#define GPIO_5  (11) //f 
+#define GPIO_6   (0) //G 
+
+
+#define NUM_GPIOS 10 
+static const int All_gpios[NUM_GPIOS] = {GPIO_14, GPIO_15, GPIO_18,
+    GPIO_17, GPIO_27, GPIO_21,GPIO_16,GPIO_26,GPIO_5,GPIO_6};
+//*---------LED----------------------------
 #define NUM_LEDS 3   
 static const int led_gpios[NUM_LEDS] = {GPIO_14, GPIO_15, GPIO_18};
 static char ledmap[4] = {
@@ -44,7 +58,30 @@ static char ledmap[4] = {
     0b010,
     0b100
 };
+//*---------7seg-----------------------------
 
+#define NUM_7seg 7 
+static const int seg7_gpios[NUM_7seg] = {GPIO_17, GPIO_27, GPIO_21,GPIO_16,GPIO_26,GPIO_5,GPIO_6};
+static char Seg_7_map[17] ={ 
+    //abcdefg 
+    0b1111110,//0 
+    0b0110000,//1
+    0b1101101,//2 
+    0b1111001,//3 
+    0b0110011,//4 
+    0b1011011,//5 
+    0b1011111,//6 
+    0b1110000,//7 
+    0b1111111,//8 
+    0b1111011,//9 
+    0b1110111,//A,a 
+    0b0011111,//B,b 
+    0b1001110,//C,c 
+    0b0111101,//D,d 
+    0b1001111,//E,e 
+    0b1000111, //F,f 
+    0b0000000  //ggggggg GGGG turn offf
+}; 
 
 dev_t dev = 0;
 static struct class *dev_class;
@@ -132,7 +169,33 @@ static ssize_t etx_write(struct file *filp,
   sscanf(rec_buf, "%15s %15s", cmd, arg);
   pr_info("Command: [%s], Arg: [%s]\n", cmd, arg);
   //todo -- 控制 7-segment ---
-  if(strcmp(cmd, "led")==0){ //* 控制 led  
+  //seg7_gpios[NUM_7seg] Seg_7_map 
+  unsigned char seg_pattern;
+  int value; 
+  if (strcmp(cmd, "7seg") == 0) {
+    if (strlen(arg) == 0) {pr_err("No 7seg argument provided\n"); return len;}
+    // 一個字一個字顯示
+    for (int i = 0; arg[i] != '\0'; i++) {
+      // 將學號字元轉成七段顯示的值
+      if (arg[i] >= '0' && arg[i] <= '9')
+        value = arg[i] - '0';
+      else if (arg[i] >= 'A' && arg[i] <= 'G')
+        value = arg[i] - 'A' + 10;
+      else if (arg[i] >= 'a' && arg[i] <= 'g')
+        value = arg[i] - 'a' + 10;
+      else { pr_err("Invalid char: %c (ignored)\n", arg[i]);
+        continue;
+      }
+      seg_pattern = Seg_7_map[value]; // ex seg_7_map[0] = 0b1111110
+      // 設定七段顯示器的 GPIO
+      for (int j = 0; j < 7; j++) {
+        int bit = (seg_pattern >> (6 - j)) & 0x01;
+        gpio_set_value(seg7_gpios[j], bit);
+      }
+      pr_info("Displaying [%c] on 7-segment\n", arg[i]);
+      msleep(1000); // 延遲 1 秒再顯示下一個
+    }
+  }else if(strcmp(cmd, "led")==0){ //* 控制 led  
     if (strlen(arg) == 0) {
         pr_err("No 7seg argument provided\n");
         return len;
@@ -175,30 +238,30 @@ static int __init etx_driver_init(void){
     pr_err( "Cannot create the Device \n");
     goto r_device;
   }
-  for (int i = 0; i < NUM_LEDS; i++){
-    if(!gpio_is_valid(led_gpios[i])){
+  for (int i = 0; i < NUM_GPIOS; i++){
+    if(!gpio_is_valid(All_gpios[i])){
         pr_err("GPIO is not valid\n");
         goto r_device;
     }
   }
   //Requesting the GPIO
   char gpio_label[10]; // 用來存放 "GPIO_XX" 的標籤
-  for (int i = 0; i < NUM_LEDS; i++){
-    snprintf(gpio_label, sizeof(gpio_label), "GPIO_%d", led_gpios[i]);
-    if (gpio_request(led_gpios[i], gpio_label) < 0){
+  for (int i = 0; i < NUM_GPIOS; i++){
+    snprintf(gpio_label, sizeof(gpio_label), "GPIO_%d", All_gpios[i]);
+    if (gpio_request(All_gpios[i], gpio_label) < 0){
         pr_err("ERROR: GPIO request failed\n");
         goto r_gpio;
     }
   }
-  for (int i = 0; i < NUM_LEDS; i++){
-    gpio_direction_output(led_gpios[i],0);  
-    gpio_export(led_gpios[i],false);
+  for (int i = 0; i < NUM_GPIOS; i++){
+    gpio_direction_output(All_gpios[i],0);  
+    gpio_export(All_gpios[i],false);
   }
   pr_info("Device Driver Insert...Done!!!\n");
   return 0;
   r_gpio:
-    for (int i = 0; i < NUM_LEDS; i++){
-        gpio_free(led_gpios[i]);
+    for (int i = 0; i < NUM_GPIOS; i++){
+        gpio_free(All_gpios[i]);
     }
   r_device:
     device_destroy(dev_class,dev);
@@ -213,9 +276,9 @@ static int __init etx_driver_init(void){
 
 // Module exit function
 static void __exit etx_driver_exit(void){
-  for (int i = 0; i < NUM_LEDS; i++){
-    gpio_unexport(led_gpios[i]);
-    gpio_free(led_gpios[i]);
+  for (int i = 0; i < NUM_GPIOS; i++){
+    gpio_unexport(All_gpios[i]);
+    gpio_free(All_gpios[i]);
   }    
   device_destroy(dev_class,dev);
   class_destroy(dev_class);

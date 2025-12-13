@@ -36,6 +36,11 @@ pi$ echo "led 2" > /dev/etx_device
 pi$ echo "led 3" > /dev/etx_device
 #* 0 turn off 
 pi$ echo "led 0" > /dev/etx_device
+
+pi$ echo "7seg 7" > /dev/etx_device
+#* 7seg turn off 
+pi$ echo "7seg g" > /dev/etx_device
+
 pi$ cat /dev/etx_device
 
 ```
