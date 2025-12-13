@@ -58,16 +58,18 @@ char* get_all_status(int room_id) {
             perror("Failed to open /dev/etx_device");
             goto r_unlock; 
         }
-        //todo  7seg , also add reserve, free, used  of led_id  not just set to 3  
         char led_id_str[MAX_NAME_LEN];
-
+        
+        snprintf(led_id_str, sizeof(led_id_str), "7seg %d", room_id);
+        ssize_t ret = write(fd_write, led_id_str, strlen(led_id_str));
+        if (ret < 0) {perror("Failed to write to 7seg");}
+        //* turn on led status  
         int led_id;
         led_id = rooms[room_id].status+1; //* 3,2,1   for used, reserve , free  
         snprintf(led_id_str, sizeof(led_id_str), "led %d", led_id);
-        // printf("Sending command: [%s]\n", led_id_str);
-        ssize_t ret = write(fd_write, led_id_str, strlen(led_id_str));
+        ret = write(fd_write, led_id_str, strlen(led_id_str));
         if (ret < 0) {
-            perror("Failed to write to the device");
+            perror("Failed to write to led");
             close(fd_write);
         }
     }
