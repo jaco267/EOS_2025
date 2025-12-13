@@ -20,12 +20,14 @@ pi$ ./test_driver
 pi$ ./room_server
 pi$ ./room_client   
 #* status
+#* status  0    #只單純查看房間0 的狀態  
 #* reserve 0 
 #* checkin 0  
 #* status 
 
 ```
 
+- todo : user 現在還只是一個 count 應該要 加入 user information (在 reserve 時輸入名字)
 - 現在 還沒有把 room_server  和 driver 整合   
 - todo : led,  把 write device 加入 room_server 的 get room status 然後點亮 led   
 - todo : button  
