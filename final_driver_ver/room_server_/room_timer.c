@@ -39,7 +39,6 @@ void* timer_worker(void* arg) {
         } else if (today != g_last_reset_day) {
             // 模擬過了一天 → 歸零
             for (int i = 0; i < MAX_ROOMS; i++) {
-                room_reservations_today[i] = 0;
                 rooms[i].reserve_count_today = 0; 
             }
             g_last_reset_day = today;
@@ -66,7 +65,6 @@ void* timer_worker(void* arg) {
                     	r->reserve_tick = now_tick;
                     	r->extend_used  = 0;
                         r->reserve_count_today++; 
-                    	room_reservations_today[i]++;
                         printf("[TIMER] Room %d assigned to waiting list after timeout. "
                             "Remaining waiters = %d.\n",
                             i, r->wait_count);
@@ -99,7 +97,6 @@ void* timer_worker(void* arg) {
                       	r->reserve_tick = now_tick;
                       	r->extend_used  = 0;
                         r->reserve_count_today++;
-                      	room_reservations_today[i]++;
                         printf("[TIMER] Room %d assigned to waiting list after session end. "
                            "Remaining waiters = %d.\n",
                            i, r->wait_count);

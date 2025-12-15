@@ -34,17 +34,12 @@ char* get_all_status(int room_id) {
                 elapsed_ticks = 0; // unlikely
         }
         long elapsed_sec = (elapsed_ticks * TICK_MS) / 1000;
-        if (room_reservations_today[i]!=rooms[i].reserve_count_today){
-            printf("reserve count should be equal\n"); 
-            exit(-1);
-        }
         snprintf(tmp, sizeof(tmp),
                  "Room %d | %s%s | User id: %d | Reserve Count: %d | wait count: %d | Time Elapsed: %lds\n",
                  rooms[i].id,
                  get_status_str(rooms[i].status),
                  rooms[i].extend_used ? " (Extended)" : "",
                    rooms[i].user_id, 
-                //  room_reservations_today[i],
                 rooms[i].reserve_count_today,
                  rooms[i].wait_count,
                  (rooms[i].status != FREE) ? elapsed_sec : 0L);
@@ -88,13 +83,8 @@ int reserve_room(int room_id, int user_id) {
     if (room_id < 0 || room_id >= MAX_ROOMS) return -2;
     pthread_mutex_lock(&room_mutex);
     room_t *r = &rooms[room_id];
-    // if (room_reservations_today[room_id] >= 2) {
     if (r->reserve_count_today >= 2) {
         pthread_mutex_unlock(&room_mutex); return -3;
-    }
-    if (room_reservations_today[room_id]!=r->reserve_count_today){
-        printf("reserve count should be equal\n"); 
-        exit(-1);
     }
     if (r->status == FREE) {
         r->status = RESERVED;
@@ -102,7 +92,6 @@ int reserve_room(int room_id, int user_id) {
         r->extend_used = 0;
         r->user_id = user_id;
         r->reserve_count_today++; 
-        room_reservations_today[room_id]++;
         pthread_mutex_unlock(&room_mutex);
         printf("[SERVER LOG] Room %d reserved at tick %llu.\n", room_id, 
             (unsigned long long)r->reserve_tick);
@@ -155,7 +144,6 @@ int release_room(int room_id) {
             r->reserve_tick = get_current_tick_snapshot();
             r->extend_used  = 0;
             r->reserve_count_today++;
-            room_reservations_today[room_id]++;
             printf("[SERVER LOG] Room %d assigned to waiting list. "
                 "Remaining waiters = %d.\n",
                 room_id, r->wait_count);

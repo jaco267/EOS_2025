@@ -37,7 +37,6 @@ typedef struct {
 extern room_t rooms[MAX_ROOMS];
 extern pthread_mutex_t room_mutex;
 #define SIM_DAY_SECONDS 180    // 模擬：1 天 = 180 秒
-extern int room_reservations_today[MAX_ROOMS];
 // 新增：記錄上次重設是在第幾天（UNIX epoch / 一天的 index）
 extern time_t g_last_reset_day;
 
