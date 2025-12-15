@@ -36,35 +36,49 @@ void* client_handler(void* arg) {
   }
   buffer[valread] = '\0';     buffer[strcspn(buffer, "\r\n")] = 0;
 
-  char *token = strtok(buffer, " ");
-  char *cmd = token;
+//   char *token = strtok(buffer, " ");
+//   char *cmd = token;
+//   int room_id = -1;
+//   token = strtok(NULL, " ");
+//   if (token != NULL) {
+//       room_id = atoi(token);
+//   }
+  char *cmd =  strtok(buffer, " ");
+  char* tok_room = strtok(NULL, " ");
+  char* tok_user = strtok(NULL, " ");
   int room_id = -1;
-  token = strtok(NULL, " ");
-  if (token != NULL) {
-      room_id = atoi(token);
-  }
+  int user_id = -1;
+  if (tok_room) room_id = atoi(tok_room);
+  if (tok_user) user_id = atoi(tok_user);
+  
   if (cmd == NULL) {   snprintf(response, sizeof(response), "ERROR Please provide a command.");
   } else if (strcmp(cmd, "status") == 0) {
       char *s = get_all_status(room_id);
       snprintf(response, sizeof(response), "OK\n%s", s);
       free(s);
-  } else if (room_id == -1 && strcmp(cmd, "status") != 0) { snprintf(response, sizeof(response), "ERROR Invalid or missing Room ID.");
+  } else if (room_id == -1 && strcmp(cmd, "status") != 0) { 
+    snprintf(response, sizeof(response), "ERROR Invalid or missing Room ID.");
   } else if (room_id < 0 || room_id >= MAX_ROOMS) {         snprintf(response, sizeof(response), "ERROR Room ID %d is out of range (0-%d).", room_id, MAX_ROOMS-1);
   } else if (strcmp(cmd, "reserve") == 0) {
-      int res = reserve_room(room_id);
-      if (res == 0) {
-          snprintf(response, sizeof(response), "OK Room %d reserved successfully. Check-in in %d seconds.", room_id, CHECKIN_TIMEOUT);
-      } else if (res == -3) {
-          snprintf(response, sizeof(response), "ERROR Room %d reservation failed. Daily limit reached.", room_id);
-      } else if (res == -4) {
-      snprintf(response, sizeof(response),
-               "WAIT Room %d is currently not free.\n"
-               "You have been added to the waiting list.\n"
-               "When the current session ends, the room will be reserved for a waiting client automatically.",
-               room_id);
-      }else {
-          snprintf(response, sizeof(response), "ERROR Room %d reservation failed. Room is not free.", room_id);
+      if (user_id == -1){
+        snprintf(response, sizeof(response), "ERROR: user_id should >0, got %d , usage : reserve <room_id> <user_id>", user_id);
+      }else{
+        int res = reserve_room(room_id);
+        if (res == 0) {
+            snprintf(response, sizeof(response), "OK Room %d reserved successfully. Check-in in %d seconds.", room_id, CHECKIN_TIMEOUT);
+        } else if (res == -3) {
+            snprintf(response, sizeof(response), "ERROR Room %d reservation failed. Daily limit reached.", room_id);
+        } else if (res == -4) {
+        snprintf(response, sizeof(response),
+                 "WAIT Room %d is currently not free.\n"
+                 "You have been added to the waiting list.\n"
+                 "When the current session ends, the room will be reserved for a waiting client automatically.",
+                 room_id);
+        }else {
+            snprintf(response, sizeof(response), "ERROR Room %d reservation failed. Room is not free.", room_id);
+        }
       }
+
   } else if (strcmp(cmd, "checkin") == 0) {
       int res = check_in(room_id);
       if (res == 0) {
@@ -103,8 +117,9 @@ int main() {
     for (int i = 0; i < MAX_ROOMS; i++) {
         rooms[i].id = i;
         rooms[i].status = FREE;
-        rooms[i].extend_used = 0;
         rooms[i].reserve_tick = 0;
+        rooms[i].extend_used = 0;
+        rooms[i].user_id     = -1;
         room_reservations_today[i] = 0;
     }
     // 取得「今天」的 day index

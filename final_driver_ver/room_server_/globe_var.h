@@ -12,7 +12,7 @@
 // durations are still specified in seconds for easy reading.
 // We'll convert to ticks using TICK_MS.
 #define SLOT_DURATION 30        // seconds (one slot)
-#define CHECKIN_TIMEOUT 5       // seconds to check-in after reservation
+#define CHECKIN_TIMEOUT 10       // seconds to check-in after reservation
 
 #define TICK_MS 100             // tick granularity (milliseconds)
 #define TICKS_PER_SEC (1000 / TICK_MS)
@@ -22,11 +22,13 @@
 #define CHECKIN_TICKS (CHECKIN_TIMEOUT * TICKS_PER_SEC)
 typedef enum { FREE, RESERVED, IN_USE } room_status_t;
 
+//* 新增欄位後請記得去room_server.c main() 修改 initialize room
 typedef struct {
     int id;
     room_status_t status;
     uint64_t reserve_tick;   // tick when reserved / checked-in
     int extend_used;         // 0: not extended, 1: extended
+    int user_id;             //* 輸入學號  
 } room_t;
 
 // shared resources

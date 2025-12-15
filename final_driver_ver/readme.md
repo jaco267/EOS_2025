@@ -1,5 +1,10 @@
 - makefile 記得 linux kernel path 要改成自己電腦上的路徑   (不是 /home/elton/Desktop...)
 - scp 的路徑也要改成自己的設定 (不是 elton@192...)  
+- 目前有新增加 user_id  所以 reserve cmd 變成   
+
+```sh
+reserve <room_id> <user_id>
+```
 
 ```sh
 
@@ -25,7 +30,7 @@ pi$ ./room_server
 pi$ ./room_client   
 #* status
 #* status  0    #只單純查看房間0 的狀態 led1 亮起 代表 free  
-#* reserve 0 
+#* reserve 0 312513129
 #* status  0    五秒內  可以看到 led 2 亮起 代表 reserved  
 #* checkin 0    五秒內
 #* status  0    可以看到 led 3 亮起
@@ -46,8 +51,10 @@ pi$ cat /dev/etx_device
 ```
 
 - todo : user 現在還只是一個 count 應該要 加入 user information (在 reserve 時輸入名字)
-- 現在 還沒有把 room_server  和 driver 整合   
-- todo : led,  把 write device 加入 room_server 的 get room status 然後點亮 led   
+  -  todo  release：只允許使用者本人釋放
+  -  todo  check_in：只允許原本預約的人
+  -  todo  room wait list 紀錄 id
+- todo : led 7seg 目前只有status 的時候會更新狀態, 能否在 timeout 時自動更新led (used->timeout release, reserve -> timeout relase)   
 - todo : button  
 - todo : rfid  
 
