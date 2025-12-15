@@ -52,26 +52,26 @@ void* client_handler(void* arg) {
   } else if (room_id == -1 && strcmp(cmd, "status") != 0) { 
     snprintf(response, sizeof(response), "ERROR Invalid or missing Room ID.");
   } else if (room_id < 0 || room_id >= MAX_ROOMS) {         snprintf(response, sizeof(response), "ERROR Room ID %d is out of range (0-%d).", room_id, MAX_ROOMS-1);
+  //*----------reserve-----------
   } else if (strcmp(cmd, "reserve") == 0) {
-      if (user_id == -1){
-        snprintf(response, sizeof(response), "ERROR: user_id should >0, got %d , usage : reserve <room_id> <user_id>", user_id);
-      }else{
-        int res = reserve_room(room_id, user_id);
-        if (res == 0) {
-            snprintf(response, sizeof(response), "OK Room %d reserved successfully. Check-in in %d seconds.", room_id, CHECKIN_TIMEOUT);
-        } else if (res == -3) {
-            snprintf(response, sizeof(response), "ERROR Room %d reservation failed. Daily limit reached.", room_id);
-        } else if (res == -4) {
+    if (user_id == -1){
+      snprintf(response, sizeof(response), "ERROR: user_id should >0, got %d , usage : reserve <room_id> <user_id>", user_id);
+    }else{
+      int res = reserve_room(room_id, user_id);
+      if (res == 0) {
+        snprintf(response, sizeof(response), "OK Room %d reserved successfully. Check-in in %d seconds.", room_id, CHECKIN_TIMEOUT);
+      } else if (res == -3) {
+        snprintf(response, sizeof(response), "ERROR Room %d reservation failed. Daily limit reached.", room_id);
+      } else if (res == -4) {
         snprintf(response, sizeof(response),
-                 "WAIT Room %d is currently not free.\n"
-                 "You have been added to the waiting list.\n"
-                 "When the current session ends, the room will be reserved for a waiting client automatically.",
-                 room_id);
-        }else {
-            snprintf(response, sizeof(response), "ERROR Room %d reservation failed. Room is not free.", room_id);
-        }
+               "Room %d is not free.\n"
+               "You have been added to the waiting list.\n"
+               "When the current session ends, the room will be reserved for a waiting client automatically.",
+               room_id);
+      }else {
+          snprintf(response, sizeof(response), "ERROR Room %d reservation failed. Room is not free.", room_id);
       }
-
+    }
   } else if (strcmp(cmd, "checkin") == 0) {
       int res = check_in(room_id);
       if (res == 0) {
@@ -113,7 +113,6 @@ int main() {
         rooms[i].reserve_tick = 0;
         rooms[i].extend_used = 0;
         rooms[i].user_id     = -1;
-        rooms[i].wait_count  = 0;
         //*  wait queue 
           rooms[i].wait_q.head = 0;
           rooms[i].wait_q.tail = 0;

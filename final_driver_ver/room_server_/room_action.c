@@ -42,7 +42,7 @@ char* get_all_status(int room_id) {
                  rooms[i].extend_used ? " (Extended)" : "",
                    rooms[i].user_id, 
                 rooms[i].reserve_count_today,
-                 rooms[i].wait_count,
+                 rooms[i].wait_q.count,
                  (rooms[i].status != FREE) ? elapsed_sec : 0L);
         strncat(resp, tmp, required_size - strlen(resp) - 1);
     }
@@ -100,7 +100,6 @@ int reserve_room(int room_id, int user_id) {
     }
     else {
         // 房間不空閒 → 加入候補隊列
-        r->wait_count++;  
         if (wait_enqueue(&r->wait_q, user_id) == 0) { // 代表加入候補成功
             pthread_mutex_unlock(&room_mutex);
             printf("[SERVER LOG] Room %d busy. User %d added to wait queue (count=%d).\n",
@@ -112,10 +111,6 @@ int reserve_room(int room_id, int user_id) {
                    room_id);
             return -5; // queue full
         }
-        // pthread_mutex_unlock(&room_mutex);
-        // printf("[SERVER LOG] Room %d is busy. Add to waitlist (count=%d).\n",
-            //    room_id, r->wait_count);
-        // return -4;   
     }
     pthread_mutex_unlock(&room_mutex);
     return -1;
@@ -151,9 +146,7 @@ int release_room(int room_id) {
         int next_user; 
 
         // 若有候補 → 立刻讓候補接手
-        // if (r->wait_count > 0) {
         if (wait_dequeue(&r->wait_q, &next_user) == 0) {
-            r->wait_count--; 
             r->status = RESERVED;
             r->reserve_tick = get_current_tick_snapshot();
             r->extend_used  = 0;
@@ -161,7 +154,7 @@ int release_room(int room_id) {
             r->reserve_count_today++;
             printf("[SERVER LOG] Room %d assigned to waiting list. "
                 "Remaining waiters = %d.\n",
-                room_id, r->wait_count);
+                room_id, r->wait_q.count);
         }
         
         pthread_mutex_unlock(&room_mutex);
