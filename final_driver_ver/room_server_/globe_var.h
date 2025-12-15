@@ -3,9 +3,13 @@
 #include <stdint.h>
 #include <pthread.h>
 #include <signal.h>
+#include "wait_queue.h"
+
 // system config
 #define MAX_ROOMS 3
 #define PORT 8080
+
+
 
 #define DEVICE_FILE "/dev/etx_device"
 #define MAX_NAME_LEN 30 
@@ -31,6 +35,7 @@ typedef struct {
     int user_id;             //* 輸入學號  
     int wait_count;          //* 每間房有多少人在候補隊列
     int reserve_count_today; //* 單日預約過幾次   超過兩次會鎖住   
+    wait_queue_t wait_q;     // wait_queue.h //todo init it in room_server.c
 } room_t;
 
 // shared resources

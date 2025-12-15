@@ -6,7 +6,7 @@ LINUX_KERNEL_PATH ?= /home/elton/Desktop/emb_linux/linux
 SRC_client = room_client.c 
 driver_test = test_driver.c
 SRC_server = room_server_/room_server.c   room_server_/room_action.c  \
-  room_server_/globe_var.c room_server_/room_timer.c
+  room_server_/globe_var.c room_server_/room_timer.c room_server_/wait_queue.c
 
 
 all:

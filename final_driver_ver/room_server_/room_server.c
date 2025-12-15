@@ -113,7 +113,11 @@ int main() {
         rooms[i].reserve_tick = 0;
         rooms[i].extend_used = 0;
         rooms[i].user_id     = -1;
-        rooms[i].wait_count  = 0; 
+        rooms[i].wait_count  = 0;
+        //*  wait queue 
+          rooms[i].wait_q.head = 0;
+          rooms[i].wait_q.tail = 0;
+          rooms[i].wait_q.count = 0;
         rooms[i].reserve_count_today = 0; 
     }
     // 取得「今天」的 day index

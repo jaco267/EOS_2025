@@ -2,6 +2,7 @@
 #include <sys/types.h> // 新增：用於 ssize_t
 #include<unistd.h>
 #include <fcntl.h>
+#include "wait_queue.h"
 // helper: status -> string
 const char* get_status_str(room_status_t status) {
     switch(status) {
@@ -100,11 +101,21 @@ int reserve_room(int room_id, int user_id) {
     else {
         // 房間不空閒 → 加入候補隊列
         r->wait_count++;  
-        int pos = r->wait_count;
-        pthread_mutex_unlock(&room_mutex);
-        printf("[SERVER LOG] Room %d is busy. Add to waitlist (count=%d).\n",
-               room_id, pos);
-        return -4;   // 代表加入候補成功
+        if (wait_enqueue(&r->wait_q, user_id) == 0) { // 代表加入候補成功
+            pthread_mutex_unlock(&room_mutex);
+            printf("[SERVER LOG] Room %d busy. User %d added to wait queue (count=%d).\n",
+                   room_id, user_id, r->wait_q.count);
+            return -4;
+        } else {
+            pthread_mutex_unlock(&room_mutex);
+            printf("[SERVER LOG] Room %d busy. Also wait queue is full so cant add to wait list.\n",
+                   room_id);
+            return -5; // queue full
+        }
+        // pthread_mutex_unlock(&room_mutex);
+        // printf("[SERVER LOG] Room %d is busy. Add to waitlist (count=%d).\n",
+            //    room_id, r->wait_count);
+        // return -4;   
     }
     pthread_mutex_unlock(&room_mutex);
     return -1;
@@ -137,12 +148,16 @@ int release_room(int room_id) {
         r->reserve_tick = 0;
         r->user_id = -1;
         printf("[SERVER LOG] Room %d released by user.\n", room_id);
+        int next_user; 
+
         // 若有候補 → 立刻讓候補接手
-        if (r->wait_count > 0) {
+        // if (r->wait_count > 0) {
+        if (wait_dequeue(&r->wait_q, &next_user) == 0) {
             r->wait_count--; 
             r->status = RESERVED;
             r->reserve_tick = get_current_tick_snapshot();
             r->extend_used  = 0;
+            r->user_id = next_user;
             r->reserve_count_today++;
             printf("[SERVER LOG] Room %d assigned to waiting list. "
                 "Remaining waiters = %d.\n",

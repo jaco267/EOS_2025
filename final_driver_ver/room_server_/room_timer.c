@@ -58,11 +58,14 @@ void* timer_worker(void* arg) {
                     r->extend_used = 0;
                     r->reserve_tick = 0;
                     r->user_id = -1;
+                    int next_user;
                     // 若有候補 → 重新預約給候補 //todo  user_id for wait queueu??
-                    if (r->wait_count > 0) {
+                    // if (r->wait_count > 0) {
+                    if (wait_dequeue(&r->wait_q, &next_user) == 0) {
                     	r->wait_count --; 
                         r->status       = RESERVED;
                     	r->reserve_tick = now_tick;
+                        r->user_id      = next_user;
                     	r->extend_used  = 0;
                         r->reserve_count_today++; 
                         printf("[TIMER] Room %d assigned to waiting list after timeout. "
@@ -90,12 +93,15 @@ void* timer_worker(void* arg) {
                     r->extend_used = 0;
                     r->reserve_tick = 0;
                     r->user_id = -1;
+                    int next_user;
                     //候補發生
-                    if (r->wait_count > 0) { //todo user_id for wait queue?
+                    // if (r->wait_count > 0) { 
+                    if (wait_dequeue(&r->wait_q, &next_user) == 0){     
                         r->wait_count --; 
                       	r->status       = RESERVED;
                       	r->reserve_tick = now_tick;
                       	r->extend_used  = 0;
+                        r->user_id = next_user;
                         r->reserve_count_today++;
                         printf("[TIMER] Room %d assigned to waiting list after session end. "
                            "Remaining waiters = %d.\n",
