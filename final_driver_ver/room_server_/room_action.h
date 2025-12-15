@@ -19,8 +19,10 @@ char* get_all_status(int room_id);
 
 int reserve_room(int room_id, int user_id);
 
-int check_in(int room_id);
-int release_room(int room_id);
+int check_in(int room_id, int user_id);
+int release_room(int room_id, int user_id);
+int extend_room(int room_id, int user_id);
+int update_display_selected_locked(void); // caller holds room_mutex
 
-int extend_room(int room_id);
+
 #endif // ROOMACTION

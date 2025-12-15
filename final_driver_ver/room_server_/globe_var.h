@@ -6,7 +6,7 @@
 #include "wait_queue.h"
 
 // system config
-#define MAX_ROOMS 3
+#define MAX_ROOMS 12
 #define PORT 8080
 
 
@@ -38,6 +38,7 @@ typedef struct {
 } room_t;
 
 // shared resources
+extern int g_selected_room;   // -1: none, else room_id
 extern room_t rooms[MAX_ROOMS];
 extern pthread_mutex_t room_mutex;
 #define SIM_DAY_SECONDS 180    // 模擬：1 天 = 180 秒

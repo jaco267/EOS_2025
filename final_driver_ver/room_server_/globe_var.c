@@ -1,4 +1,5 @@
 #include "globe_var.h"
+int g_selected_room = -1;
 
 // shared resources
 room_t rooms[MAX_ROOMS];
@@ -9,3 +10,4 @@ pthread_mutex_t room_mutex = PTHREAD_MUTEX_INITIALIZER;
 volatile sig_atomic_t g_tick = 0;
 // 新增
 long g_last_reset_day = -1;   // 尚未初始化
+

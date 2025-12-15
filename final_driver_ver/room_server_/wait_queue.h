@@ -14,5 +14,6 @@ typedef struct {
 
 int wait_enqueue(wait_queue_t *q, int user_id) ;
 int wait_dequeue(wait_queue_t *q, int *user_id);
+int wait_contains(wait_queue_t *q, int user_id);
 
 #endif // WAITQUEUE

@@ -1,4 +1,4 @@
-// server_softtimer.c
+// room_server.c
 // Soft-timer (tick-based) version of your room server.
 // Tick resolution: 100 ms (10 ticks/sec) using setitimer + SIGALRM.
 
@@ -16,9 +16,33 @@
 #include <signal.h>
 #include <stdint.h>
 #include <errno.h>
+
 #include "globe_var.h"
 #include "room_action.h"
 #include "room_timer.h"
+#include "user_db.h"
+
+// 你應該會在某個 .c 定義它（例如 globe_var.c）
+extern int g_selected_room;
+
+// --------- helpers ---------
+
+static void send_text(int sock, const char *msg) {
+    if (!msg) msg = "ERROR internal\n";
+    send(sock, msg, strlen(msg), 0);
+}
+
+static void usage(char *out, size_t n) {
+    snprintf(out, n,
+        "Commands:\n"
+        "  status [room_id]\n"
+        "  register <user_id> <name_no_space>\n"
+        "  select <room_id>\n"
+        "  reserve <room_id> <user_id>\n"
+        "  checkin <room_id> <user_id>\n"
+        "  release <room_id> <user_id>\n"
+        "  extend <room_id> <user_id>\n");
+}
 
 // ---------- client handler ----------
 
@@ -27,83 +51,113 @@ void* client_handler(void* arg) {
   free(arg);
   char buffer[1024] = {0};
   char response[2048];
-  printf("[SERVER] New client connected on socket %d.\n", client_sock);
 
   ssize_t valread = read(client_sock, buffer, sizeof(buffer)-1);
-  if (valread <= 0) {
-      printf("[SERVER] Client %d disconnected or read error.\n", client_sock);
+  if (valread <= 0) goto cleanup;
+
+  buffer[valread] = '\0';
+  buffer[strcspn(buffer, "\r\n")] = 0;
+
+  // quick cmd peek
+  char cmd[32] = {0};
+  sscanf(buffer, "%31s", cmd);
+
+  // -------- register <user_id> <name...> --------
+  if (strcmp(cmd, "register") == 0) {
+      int uid = -1, n = 0;
+      char name[128] = {0};
+
+      if (sscanf(buffer, "register %d %n", &uid, &n) >= 1) {
+          if (n > 0 && buffer[n]) {
+              snprintf(name, sizeof(name), "%s", buffer + n);
+          }
+          pthread_mutex_lock(&room_mutex);
+          int rc = user_register_locked(uid, name);
+          pthread_mutex_unlock(&room_mutex);
+
+          if (rc == 0) snprintf(response, sizeof(response), "OK registered uid=%d name=%s", uid, (name[0]?name:"UNKNOWN"));
+          else snprintf(response, sizeof(response), "ERROR register failed (uid must >0, max users=%d)", MAX_USERS);
+      } else {
+          snprintf(response, sizeof(response), "ERROR usage: register <user_id> <name>");
+      }
+      send(client_sock, response, strlen(response), 0);
       goto cleanup;
   }
-  buffer[valread] = '\0';     buffer[strcspn(buffer, "\r\n")] = 0;
 
-  char *cmd =  strtok(buffer, " ");
-  char* tok_room = strtok(NULL, " ");
-  char* tok_user = strtok(NULL, " ");
-  int room_id = -1;
-  int user_id = -1;
-  if (tok_room) room_id = atoi(tok_room);
-  if (tok_user) user_id = atoi(tok_user);
-  
-  if (cmd == NULL) {   snprintf(response, sizeof(response), "ERROR Please provide a command.");
-  } else if (strcmp(cmd, "status") == 0) {
-      char *s = get_all_status(room_id);
+  // common tokens
+  char *dup = strdup(buffer);
+  char *t = strtok(dup, " ");
+  char *tok_room = strtok(NULL, " ");
+  char *tok_user = strtok(NULL, " ");
+  int room_id = (tok_room ? atoi(tok_room) : -1);
+  int user_id = (tok_user ? atoi(tok_user) : -1);
+
+  // name remainder (for reserve)
+  char name[128] = {0};
+  if (strcmp(cmd, "reserve") == 0) {
+      int rid=-1, uid=-1, n=0;
+      if (sscanf(buffer, "reserve %d %d %n", &rid, &uid, &n) >= 2) {
+          if (n > 0 && buffer[n]) snprintf(name, sizeof(name), "%s", buffer + n);
+          room_id = rid; user_id = uid;
+      }
+  }
+
+  if (strcmp(cmd, "status") == 0) {
+      // allow: status  OR  status <room_id>
+      int rid = -1;
+      if (tok_room) rid = atoi(tok_room);
+      char *s = get_all_status(tok_room ? rid : -1);
       snprintf(response, sizeof(response), "OK\n%s", s);
       free(s);
-  } else if (room_id == -1 && strcmp(cmd, "status") != 0) { 
-    snprintf(response, sizeof(response), "ERROR Invalid or missing Room ID.");
-  } else if (room_id < 0 || room_id >= MAX_ROOMS) {         snprintf(response, sizeof(response), "ERROR Room ID %d is out of range (0-%d).", room_id, MAX_ROOMS-1);
-  //*----------reserve-----------
-  } else if (strcmp(cmd, "reserve") == 0) {
-    if (user_id == -1){
-      snprintf(response, sizeof(response), "ERROR: user_id should >0, got %d , usage : reserve <room_id> <user_id>", user_id);
-    }else{
-      int res = reserve_room(room_id, user_id);
-      if (res == 0) {
-        snprintf(response, sizeof(response), "OK Room %d reserved successfully. Check-in in %d seconds.", room_id, CHECKIN_TIMEOUT);
-      } else if (res == -3) {
-        snprintf(response, sizeof(response), "ERROR Room %d reservation failed. Daily limit reached.", room_id);
-      } else if (res == -4) {
-        snprintf(response, sizeof(response),
-          "Room %d is not free.\n""You have been added to the waiting list.\n",
-          room_id);
-      } else if (res == -5) {
-        snprintf(response, sizeof(response),
-          "Room %d is not free.\n""cant add to waiting list, since the waiting queue is full.\n",
-          room_id);
-      }else {
-          snprintf(response, sizeof(response), "ERROR Room %d reservation failed. Room is not free.", room_id);
-      }
-    }
-  } else if (strcmp(cmd, "checkin") == 0) {
-      int res = check_in(room_id);
-      if (res == 0) {
-          snprintf(response, sizeof(response), "OK Room %d checked in. Session duration: %d seconds.", room_id, SLOT_DURATION);
-      } else {
-          snprintf(response, sizeof(response), "ERROR Room %d check-in failed. Status must be RESERVED.", room_id);
-      }
-  } else if (strcmp(cmd, "release") == 0) {
-      int res = release_room(room_id);
-      if (res == 0) {
-          snprintf(response, sizeof(response), "OK Room %d released successfully.", room_id);
-      } else {
-          snprintf(response, sizeof(response), "ERROR Room %d release failed. Room is already FREE.", room_id);
-      }
-  } else if (strcmp(cmd, "extend") == 0) {
-      int res = extend_room(room_id);
-      if (res == 0) {
-          snprintf(response, sizeof(response), "OK Room %d extended by %d seconds.", room_id, SLOT_DURATION);
-      } else {
-          snprintf(response, sizeof(response), "ERROR Room %d extension failed. Room is not IN_USE, already extended, or there is a pending reservation.", room_id);
-      }
-  } else {snprintf(response, sizeof(response), "ERROR Unknown command: %s.", cmd);}
 
+  } else if (room_id < 0 || room_id >= MAX_ROOMS) {
+      snprintf(response, sizeof(response), "ERROR Room ID out of range (0-%d).", MAX_ROOMS-1);
+
+  } else if (strcmp(cmd, "reserve") == 0) {
+      if (user_id <= 0) {
+          snprintf(response, sizeof(response), "ERROR usage: reserve <room_id> <user_id> [name]");
+      } else {
+          int res = reserve_room(room_id, user_id, name[0]?name:NULL);
+          if (res == 0) snprintf(response, sizeof(response), "OK Room %d reserved by %d. Check-in in %d seconds.", room_id, user_id, CHECKIN_TIMEOUT);
+          else if (res == -3) snprintf(response, sizeof(response), "ERROR Room %d reservation failed. Daily limit reached.", room_id);
+          else if (res == -4) snprintf(response, sizeof(response), "WAIT Room %d busy. Added to wait queue.", room_id);
+          else if (res == -5) snprintf(response, sizeof(response), "ERROR Room %d wait queue full.", room_id);
+          else if (res == -6) snprintf(response, sizeof(response), "ERROR user %d already has an active room.", user_id);
+          else if (res == -7) snprintf(response, sizeof(response), "ERROR user %d already in wait queue for room %d.", user_id, room_id);
+          else if (res == -10) snprintf(response, sizeof(response), "ERROR user %d not registered. Use: register <user_id> <name> OR reserve ... <name>", user_id);
+          else snprintf(response, sizeof(response), "ERROR reserve failed (%d).", res);
+      }
+
+  } else if (strcmp(cmd, "checkin") == 0) {
+      int res = check_in(room_id, user_id); // user_id may be -1 (skip check)
+      if (res == 0) snprintf(response, sizeof(response), "OK Room %d checked in. Session duration: %d seconds.", room_id, SLOT_DURATION);
+      else if (res == -8) snprintf(response, sizeof(response), "ERROR checkin denied: not the room owner.");
+      else snprintf(response, sizeof(response), "ERROR Room %d check-in failed.", room_id);
+
+  } else if (strcmp(cmd, "release") == 0) {
+      int res = release_room(room_id, user_id);
+      if (res == 0) snprintf(response, sizeof(response), "OK Room %d released.", room_id);
+      else if (res == -8) snprintf(response, sizeof(response), "ERROR release denied: not the room owner.");
+      else snprintf(response, sizeof(response), "ERROR Room %d release failed.", room_id);
+
+  } else if (strcmp(cmd, "extend") == 0) {
+      int res = extend_room(room_id, user_id);
+      if (res == 0) snprintf(response, sizeof(response), "OK Room %d extended by %d seconds.", room_id, SLOT_DURATION);
+      else if (res == -8) snprintf(response, sizeof(response), "ERROR extend denied: not the room owner.");
+      else snprintf(response, sizeof(response), "ERROR Room %d extension failed.", room_id);
+
+  } else {
+      snprintf(response, sizeof(response), "ERROR Unknown command: %s", cmd);
+  }
+
+  free(dup);
   send(client_sock, response, strlen(response), 0);
 
 cleanup:
   close(client_sock);
-  printf("[SERVER] Client %d handler finished.\n", client_sock);
   return NULL;
 }
+
 
 // ---------- main ----------
 
@@ -114,62 +168,84 @@ int main() {
         rooms[i].status = FREE;
         rooms[i].reserve_tick = 0;
         rooms[i].extend_used = 0;
-        rooms[i].user_id     = -1;
-        //*  wait queue 
-          rooms[i].wait_q.head = 0;
-          rooms[i].wait_q.tail = 0;
-          rooms[i].wait_q.count = 0;
-        rooms[i].reserve_count_today = 0; 
+        rooms[i].user_id = -1;
+
+        rooms[i].wait_q.head = 0;
+        rooms[i].wait_q.tail = 0;
+        rooms[i].wait_q.count = 0;
+
+        rooms[i].reserve_count_today = 0;
     }
-    // 取得「今天」的 day index
+
+    // default selected room (optional)
+    g_selected_room = 0;
+
+    // init simulated "day"
     time_t now = time(NULL);
     g_last_reset_day = now / SIM_DAY_SECONDS;
+
     // setup SIGALRM handler for tick
     struct sigaction sa;
     memset(&sa, 0, sizeof(sa));
     sa.sa_handler = tick_handler;
-    // block other signals while in handler
     sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_RESTART;
-    if (sigaction(SIGALRM, &sa, NULL) != 0) {perror("sigaction");return 1;}
+    sa.sa_flags = SA_RESTART; // accept() 仍可能 EINTR，你下面有處理
+    if (sigaction(SIGALRM, &sa, NULL) != 0) {
+        perror("sigaction");
+        return 1;
+    }
+
     // configure timer: TICK_MS milliseconds interval
     struct itimerval itv;
     itv.it_value.tv_sec = TICK_MS / 1000;
     itv.it_value.tv_usec = (TICK_MS % 1000) * 1000;
-    itv.it_interval = itv.it_value; // periodic
-    if (setitimer(ITIMER_REAL, &itv, NULL) != 0) {perror("setitimer");return 1;}
+    itv.it_interval = itv.it_value;
+    if (setitimer(ITIMER_REAL, &itv, NULL) != 0) {
+        perror("setitimer");
+        return 1;
+    }
+
     // start timer worker thread
     pthread_t tid_timer;
-    if (pthread_create(&tid_timer, NULL, timer_worker, NULL) != 0) {perror("pthread_create timer_worker");return 1;}
+    if (pthread_create(&tid_timer, NULL, timer_worker, NULL) != 0) {
+        perror("pthread_create timer_worker");
+        return 1;
+    }
     pthread_detach(tid_timer);
 
-    // setup network server (same as original)
+    // setup network server
     int server_fd;
     struct sockaddr_in address;
     int opt = 1;
-    int addrlen = sizeof(address);
+    socklen_t addrlen = sizeof(address);
 
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd < 0) {
         perror("socket failed");
-        exit(EXIT_FAILURE);
+        return 1;
     }
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
+
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)) != 0) {
         perror("setsockopt");
         close(server_fd);
-        exit(EXIT_FAILURE);
+        return 1;
     }
+
+    memset(&address, 0, sizeof(address));
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
     address.sin_port = htons(PORT);
+
     if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
         perror("bind failed");
         close(server_fd);
-        exit(EXIT_FAILURE);
+        return 1;
     }
+
     if (listen(server_fd, 8) < 0) {
         perror("listen");
         close(server_fd);
-        exit(EXIT_FAILURE);
+        return 1;
     }
 
     printf("Server (soft-timer) listening on port %d with %d rooms.\n", PORT, MAX_ROOMS);
@@ -178,15 +254,21 @@ int main() {
     printf("--- Waiting for clients ---\n");
 
     while (1) {
-        int new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen);
+        int new_socket = accept(server_fd, (struct sockaddr *)&address, &addrlen);
         if (new_socket < 0) {
-            if (errno == EINTR) continue; // interrupted by signal, retry
+            if (errno == EINTR) continue;
             perror("accept");
             continue;
         }
+
         int *pclient = malloc(sizeof(int));
-        if (!pclient) { perror("malloc"); close(new_socket); continue; }
+        if (!pclient) {
+            perror("malloc");
+            close(new_socket);
+            continue;
+        }
         *pclient = new_socket;
+
         pthread_t tid;
         if (pthread_create(&tid, NULL, client_handler, pclient) != 0) {
             perror("pthread_create client");
@@ -197,7 +279,6 @@ int main() {
         pthread_detach(tid);
     }
 
-    // cleanup (unreachable in this server design)
     close(server_fd);
     pthread_mutex_destroy(&room_mutex);
     return 0;

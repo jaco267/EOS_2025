@@ -19,3 +19,11 @@ int wait_dequeue(wait_queue_t *q, int *user_id) {
     q->count--;
     return 0;
 }
+
+int wait_contains(wait_queue_t *q, int user_id) {
+    for (int i = 0; i < q->count; i++) {
+        int idx = (q->head + i) % MAX_WAITING;
+        if (q->users[idx] == user_id) return 1;
+    }
+    return 0;
+}
