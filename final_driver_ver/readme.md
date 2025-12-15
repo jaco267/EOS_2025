@@ -48,6 +48,9 @@ pi$ echo "7seg g" > /dev/etx_device
 
 pi$ cat /dev/etx_device
 
+
+# rpi$ 關機  
+# pi$ sudo shutdown -h now
 ```
 
 ### todo 
