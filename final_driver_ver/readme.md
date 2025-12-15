@@ -71,7 +71,7 @@ pi$ cat /dev/etx_device
 #### led pin,  現在只要把 三個 led 接上 gpio14,15,18 就好了 (之後會當成 state(reserve, used, free), 但我還沒寫)
 ```
 pin 腳                          RPi gpio pin  
-           gnd                      1  2                                
+           gnd           3.3 v   ---1  2                                
         g f | a b                   3  4                           
         | | | | |                   5  6 ---gnd                       
          -------                    7  8 ---GPIO 14 (led1)         
@@ -85,10 +85,12 @@ pin 腳                          RPi gpio pin
         e d | c Dp   GPIO 11  (f)---23 24             
            gnd                      25 26             
                      GPIO  0  (g)---27 28               
-                     GPIO  5(led)---29 30               
-                     GPIO  6(led)---31 32               
+                     GPIO  5     ---29 30               
+                     GPIO  6     ---31 32               
                                     33 34               
-                                    35 36 ---GPIO 16 (led)               
-                     GPIO 26(led)---37 38               
-                             gnd    39 40 ---GPIO 21 (led)
+                                    35 36 ---GPIO 16 (button)               
+                     GPIO 26     ---37 38               
+                             gnd    39 40 ---GPIO 21 
 ```
+
+- [button 接線](https://raspberrypihq.com/use-a-push-button-with-raspberry-pi-gpio/)
