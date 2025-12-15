@@ -37,10 +37,11 @@ char* get_all_status(int room_id) {
         }
         long elapsed_sec = (elapsed_ticks * TICK_MS) / 1000;
         snprintf(tmp, sizeof(tmp),
-                 "Room %d | Status: %s%s | Reserve Count: %d | Time Elapsed: %lds\n",
+                 "Room %d | Status: %s%s | User id: %d | Reserve Count: %d | Time Elapsed: %lds\n",
                  rooms[i].id,
                  get_status_str(rooms[i].status),
                  rooms[i].extend_used ? " (Extended)" : "",
+                   rooms[i].user_id, 
                  room_reservations_today[i],
                  (rooms[i].status != FREE) ? elapsed_sec : 0L);
         strncat(resp, tmp, required_size - strlen(resp) - 1);
@@ -79,7 +80,7 @@ char* get_all_status(int room_id) {
 
 // ------ operations (reserve/checkin/release/extend) ------
 
-int reserve_room(int room_id) {
+int reserve_room(int room_id, int user_id) {
     if (room_id < 0 || room_id >= MAX_ROOMS) return -2;
     pthread_mutex_lock(&room_mutex);
     if (room_reservations_today[room_id] >= 2) {
@@ -90,6 +91,7 @@ int reserve_room(int room_id) {
         r->status = RESERVED;
         r->reserve_tick = get_current_tick_snapshot();
         r->extend_used = 0;
+        r->user_id = user_id;
         room_reservations_today[room_id]++;
         pthread_mutex_unlock(&room_mutex);
         printf("[SERVER LOG] Room %d reserved at tick %llu.\n", room_id, 
@@ -117,6 +119,7 @@ int check_in(int room_id) {
         r->status = IN_USE;
         r->reserve_tick = get_current_tick_snapshot(); // start of session
         r->extend_used = 0;
+        //todo r->user_id
         pthread_mutex_unlock(&room_mutex);
         printf("[SERVER LOG] Room %d checked in at tick %llu.\n", room_id, (unsigned long long)r->reserve_tick);
         return 0;
@@ -133,6 +136,7 @@ int release_room(int room_id) {
         r->status = FREE;
         r->extend_used = 0;
         r->reserve_tick = 0;
+        r->user_id = -1;
         printf("[SERVER LOG] Room %d released by user.\n", room_id);
         // 若有候補 → 立刻讓候補接手
         if (room_waiting_count[room_id] > 0) {

@@ -57,7 +57,8 @@ void* timer_worker(void* arg) {
                     r->status = FREE;
                     r->extend_used = 0;
                     r->reserve_tick = 0;
-                    // 若有候補 → 重新預約給候補
+                    r->user_id = -1;
+                    // 若有候補 → 重新預約給候補 //todo  user_id for wait queueu??
                 	if (room_waiting_count[i] > 0) {
                     	room_waiting_count[i]--;
                     	r->status       = RESERVED;
@@ -89,8 +90,9 @@ void* timer_worker(void* arg) {
                     r->status = FREE;
                     r->extend_used = 0;
                     r->reserve_tick = 0;
+                    r->user_id = -1;
                     //候補發生
-                    if (room_waiting_count[i] > 0) {
+                    if (room_waiting_count[i] > 0) {  //todo user_id for wait queue?
                       	room_waiting_count[i]--;
                       	r->status       = RESERVED;
                       	r->reserve_tick = now_tick;

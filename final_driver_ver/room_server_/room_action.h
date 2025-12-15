@@ -17,7 +17,7 @@ const char* get_status_str(room_status_t status);
 char* get_all_status(int room_id);
 // ------ operations (reserve/checkin/release/extend) ------
 
-int reserve_room(int room_id);
+int reserve_room(int room_id, int user_id);
 
 int check_in(int room_id);
 int release_room(int room_id);

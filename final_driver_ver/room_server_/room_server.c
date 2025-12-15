@@ -63,7 +63,7 @@ void* client_handler(void* arg) {
       if (user_id == -1){
         snprintf(response, sizeof(response), "ERROR: user_id should >0, got %d , usage : reserve <room_id> <user_id>", user_id);
       }else{
-        int res = reserve_room(room_id);
+        int res = reserve_room(room_id, user_id);
         if (res == 0) {
             snprintf(response, sizeof(response), "OK Room %d reserved successfully. Check-in in %d seconds.", room_id, CHECKIN_TIMEOUT);
         } else if (res == -3) {
