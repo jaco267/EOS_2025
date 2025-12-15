@@ -59,22 +59,12 @@ void* timer_worker(void* arg) {
                     r->reserve_tick = 0;
                     r->user_id = -1;
                     // 若有候補 → 重新預約給候補 //todo  user_id for wait queueu??
-                    if (room_waiting_count[i]!= r->wait_count){
-                        printf("wati count should be equal\n"); 
-                        exit(-1);
-                    }
-                	// if (room_waiting_count[i] > 0) {
                     if (r->wait_count > 0) {
-                        room_waiting_count[i]--;
                     	r->wait_count --; 
                         r->status       = RESERVED;
                     	r->reserve_tick = now_tick;
                     	r->extend_used  = 0;
                     	room_reservations_today[i]++;
-        
-                    	// printf("[TIMER] Room %d assigned to waiting list after timeout. "
-                        //    "Remaining waiters = %d.\n",
-                        //    i, room_waiting_count[i]);
                         printf("[TIMER] Room %d assigned to waiting list after timeout. "
                             "Remaining waiters = %d.\n",
                             i, r->wait_count);
@@ -101,22 +91,12 @@ void* timer_worker(void* arg) {
                     r->reserve_tick = 0;
                     r->user_id = -1;
                     //候補發生
-                    if (room_waiting_count[i]!= r->wait_count){
-                        printf("wati count should be equal\n"); 
-                        exit(-1);
-                    }
-                    if (r->wait_count > 0) {
-                    // if (room_waiting_count[i] > 0) {  //todo user_id for wait queue?
-                      	room_waiting_count[i]--;
+                    if (r->wait_count > 0) { //todo user_id for wait queue?
                         r->wait_count --; 
                       	r->status       = RESERVED;
                       	r->reserve_tick = now_tick;
                       	r->extend_used  = 0;
                       	room_reservations_today[i]++;
-          
-                      	// printf("[TIMER] Room %d assigned to waiting list after session end. "
-                        //      "Remaining waiters = %d.\n",
-                        //      i, room_waiting_count[i]);
                         printf("[TIMER] Room %d assigned to waiting list after session end. "
                            "Remaining waiters = %d.\n",
                            i, r->wait_count);

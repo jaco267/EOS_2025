@@ -99,12 +99,6 @@ int reserve_room(int room_id, int user_id) {
     else {
         // 房間不空閒 → 加入候補隊列
         r->wait_count++;  
-        room_waiting_count[room_id]++;
-        if (r->wait_count != room_waiting_count[room_id]){
-            printf("wait count should be equal \n");
-            exit(-1);
-        }
-        // int pos = room_waiting_count[room_id];
         int pos = r->wait_count;
         pthread_mutex_unlock(&room_mutex);
         printf("[SERVER LOG] Room %d is busy. Add to waitlist (count=%d).\n",
@@ -142,24 +136,13 @@ int release_room(int room_id) {
         r->reserve_tick = 0;
         r->user_id = -1;
         printf("[SERVER LOG] Room %d released by user.\n", room_id);
-        if (room_waiting_count[room_id]!= r->wait_count){
-            printf("wati count should be equal\n"); 
-            exit(-1);
-        }
         // 若有候補 → 立刻讓候補接手
-        // if (room_waiting_count[room_id] > 0) {
         if (r->wait_count > 0) {
-            room_waiting_count[room_id]--;
             r->wait_count--; 
             r->status = RESERVED;
             r->reserve_tick = get_current_tick_snapshot();
             r->extend_used  = 0;
             room_reservations_today[room_id]++;
-
-            // printf("[SERVER LOG] Room %d assigned to waiting list. "
-            //        "Remaining waiters = %d.\n",
-            //        room_id, room_waiting_count[room_id]);
-
             printf("[SERVER LOG] Room %d assigned to waiting list. "
                 "Remaining waiters = %d.\n",
                 room_id, r->wait_count);

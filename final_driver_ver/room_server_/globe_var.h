@@ -29,7 +29,7 @@ typedef struct {
     uint64_t reserve_tick;   // tick when reserved / checked-in
     int extend_used;         // 0: not extended, 1: extended
     int user_id;             //* 輸入學號  
-    int wait_count;          //* 等待人數
+    int wait_count;          //* 每間房有多少人在候補隊列
 } room_t;
 
 // shared resources
@@ -39,8 +39,7 @@ extern pthread_mutex_t room_mutex;
 extern int room_reservations_today[MAX_ROOMS];
 // 新增：記錄上次重設是在第幾天（UNIX epoch / 一天的 index）
 extern time_t g_last_reset_day;
-// 新增：每間房有多少人在候補隊列
-extern int room_waiting_count[MAX_ROOMS];
+
 // global tick counter (tick increments in signal handler)
 // use sig_atomic_t for signal-safety; worker will read into a wider type
 //* dont put static in header file
