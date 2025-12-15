@@ -11,8 +11,6 @@ const char* get_status_str(room_status_t status) {
         default: return "UNKNOWN";
     }
 }
-
-
 /** return formatted string with all room status.
  * Caller must free returned buffer.*/
 char* get_all_status(int room_id) {
@@ -37,7 +35,7 @@ char* get_all_status(int room_id) {
         }
         long elapsed_sec = (elapsed_ticks * TICK_MS) / 1000;
         snprintf(tmp, sizeof(tmp),
-                 "Room %d | Status: %s%s | User id: %d | Reserve Count: %d | Time Elapsed: %lds\n",
+                 "Room %d | %s%s | User id: %d | Reserve Count: %d | Time Elapsed: %lds\n",
                  rooms[i].id,
                  get_status_str(rooms[i].status),
                  rooms[i].extend_used ? " (Extended)" : "",
