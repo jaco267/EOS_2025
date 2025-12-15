@@ -149,6 +149,7 @@ int release_room(int room_id) {
 
         // 若有候補 → 立刻讓候補接手
         if (wait_dequeue(&r->wait_q, &next_user) == 0) {
+            //todo  這裡應該要有像是 reserve 裡面 r->reserve_count_today >= 2 return 的機制？
             r->status = RESERVED;
             r->reserve_tick = get_current_tick_snapshot();
             r->extend_used  = 0;
