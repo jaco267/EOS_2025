@@ -30,6 +30,7 @@ typedef struct {
     int extend_used;         // 0: not extended, 1: extended
     int user_id;             //* 輸入學號  
     int wait_count;          //* 每間房有多少人在候補隊列
+    int reserve_count_today; //* 單日預約過幾次   超過兩次會鎖住   
 } room_t;
 
 // shared resources

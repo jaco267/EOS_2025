@@ -114,6 +114,7 @@ int main() {
         rooms[i].extend_used = 0;
         rooms[i].user_id     = -1;
         rooms[i].wait_count  = 0; 
+        rooms[i].reserve_count_today = 0; 
         room_reservations_today[i] = 0;
     }
     // 取得「今天」的 day index
