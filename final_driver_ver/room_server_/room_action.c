@@ -25,9 +25,7 @@ char* get_all_status(int room_id) {
     uint64_t now_tick = get_current_tick_snapshot();
     for (int i = 0; i < MAX_ROOMS; i++) {
         if (room_id!=-1){
-            if (i != room_id){
-                continue;
-            }
+            if (i != room_id){continue;}
         }
         char tmp[200];
         uint64_t elapsed_ticks = 0; //* reserve or checkin 狀態過了多久
@@ -102,9 +100,7 @@ int reserve_room(int room_id) {
         // 房間不空閒 → 加入候補隊列
         room_waiting_count[room_id]++;
         int pos = room_waiting_count[room_id];
-
         pthread_mutex_unlock(&room_mutex);
-
         printf("[SERVER LOG] Room %d is busy. Add to waitlist (count=%d).\n",
                room_id, pos);
         return -4;   // 代表加入候補成功
