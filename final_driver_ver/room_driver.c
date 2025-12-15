@@ -28,15 +28,15 @@ pin 腳                          RPi gpio pin
                      GPIO  5(led)---29 30               
                      GPIO  6(led)---31 32               
                                     33 34               
-                                    35 36 ---GPIO 16 (led)               
+                                    35 36 ---GPIO 16 (led or buttom)               
                      GPIO 26(led)---37 38               
                              gnd    39 40 ---GPIO 21 (led)
 */
-
+//* led 
 #define GPIO_14 (14) //led 
 #define GPIO_15 (15) //led 
 #define GPIO_18 (18) //led
-//7seg  
+// 7seg  
 #define GPIO_17 (17) //a 
 #define GPIO_27 (27) //b 
 #define GPIO_21 (22) //C
@@ -45,6 +45,8 @@ pin 腳                          RPi gpio pin
 #define GPIO_5  (11) //f 
 #define GPIO_6   (0) //G 
 
+//* buttom 
+#define GPIO_16 (16) //buttom
 
 #define NUM_GPIOS 10 
 static const int All_gpios[NUM_GPIOS] = {GPIO_14, GPIO_15, GPIO_18,
@@ -168,7 +170,6 @@ static ssize_t etx_write(struct file *filp,
   // 解析指令，例如 "7seg A" 或 "led0 on"
   sscanf(rec_buf, "%15s %15s", cmd, arg);
   pr_info("Command: [%s], Arg: [%s]\n", cmd, arg);
-  //todo -- 控制 7-segment ---
   //seg7_gpios[NUM_7seg] Seg_7_map 
   unsigned char seg_pattern;
   int value; 

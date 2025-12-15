@@ -54,6 +54,7 @@ pi$ cat /dev/etx_device
 #### 重要  
 - todo : button  
 - todo : rfid  
+- todo : ncurse
 - todo : led 7seg 目前只有status 的時候會更新狀態, 能否在 timeout 時自動更新led (used->timeout release, reserve -> timeout relase)   
 #### 次要
 - todo : user 現在還只是一個 count 應該要 加入 user information (在 reserve 時輸入名字)
