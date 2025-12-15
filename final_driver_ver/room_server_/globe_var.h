@@ -29,6 +29,7 @@ typedef struct {
     uint64_t reserve_tick;   // tick when reserved / checked-in
     int extend_used;         // 0: not extended, 1: extended
     int user_id;             //* 輸入學號  
+    int wait_count;          //* 等待人數
 } room_t;
 
 // shared resources

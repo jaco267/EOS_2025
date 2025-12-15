@@ -36,13 +36,6 @@ void* client_handler(void* arg) {
   }
   buffer[valread] = '\0';     buffer[strcspn(buffer, "\r\n")] = 0;
 
-//   char *token = strtok(buffer, " ");
-//   char *cmd = token;
-//   int room_id = -1;
-//   token = strtok(NULL, " ");
-//   if (token != NULL) {
-//       room_id = atoi(token);
-//   }
   char *cmd =  strtok(buffer, " ");
   char* tok_room = strtok(NULL, " ");
   char* tok_user = strtok(NULL, " ");
@@ -120,6 +113,7 @@ int main() {
         rooms[i].reserve_tick = 0;
         rooms[i].extend_used = 0;
         rooms[i].user_id     = -1;
+        rooms[i].wait_count  = 0; 
         room_reservations_today[i] = 0;
     }
     // 取得「今天」的 day index
