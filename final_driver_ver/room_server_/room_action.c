@@ -35,12 +35,13 @@ char* get_all_status(int room_id) {
         }
         long elapsed_sec = (elapsed_ticks * TICK_MS) / 1000;
         snprintf(tmp, sizeof(tmp),
-                 "Room %d | %s%s | User id: %d | Reserve Count: %d | Time Elapsed: %lds\n",
+                 "Room %d | %s%s | User id: %d | Reserve Count: %d | wait count: %d | Time Elapsed: %lds\n",
                  rooms[i].id,
                  get_status_str(rooms[i].status),
                  rooms[i].extend_used ? " (Extended)" : "",
                    rooms[i].user_id, 
                  room_reservations_today[i],
+                 rooms[i].wait_count,
                  (rooms[i].status != FREE) ? elapsed_sec : 0L);
         strncat(resp, tmp, required_size - strlen(resp) - 1);
     }
