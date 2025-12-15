@@ -102,13 +102,12 @@ static struct file_operations fops = {
 };
 // This function will be called when we open the Device file
 static int etx_open(struct inode *inode, struct file *file){
-  pr_info("Device File Opened...!!!\n"); return 0;
+  pr_info("Device File Opened...\n"); return 0;
 }
 // This function will be called when we close the Device file
 static int etx_release(struct inode *inode, struct file *file){
-  pr_info("Device File Closed...!!!\n"); return 0;
+  pr_info("Device File Closed...\n"); return 0;
 }
-
 //! when we $ cat /dev/etx_device
 // etx_read is called when we read the Device file
 static ssize_t etx_read(struct file *filp, char __user *buf, 
@@ -133,6 +132,10 @@ static ssize_t etx_read(struct file *filp, char __user *buf,
              break; 
         }
     }
+    int btn_state = gpio_get_value(GPIO_16);
+    current_pos += snprintf(kernel_buffer + current_pos,
+      sizeof(kernel_buffer) - current_pos,
+      "\nBTN:%d\n", btn_state);
     size_t required_len = current_pos;
     // 3. 確定實際要傳送的位元組數 (與使用者提供的緩衝區長度 len 比較)
     if (required_len > len) {   ret = len; 
@@ -233,31 +236,42 @@ static int __init etx_driver_init(void){
     pr_err( "Cannot create the Device \n");
     goto r_device;
   }
+  //*------check gpio is valid------
   for (int i = 0; i < NUM_GPIOS; i++){
-    if(!gpio_is_valid(All_gpios[i])){
-        pr_err("GPIO is not valid\n");
+    if(!gpio_is_valid(All_gpios[i])){pr_err("GPIO is not valid\n");
         goto r_device;
     }
   }
-  //Requesting the GPIO
+  if (!gpio_is_valid(GPIO_16)){pr_err("Button GPIO is not valid\n");
+    goto r_device; 
+  }
+  //*--------Requesting the GPIO-------
   char gpio_label[10]; // 用來存放 "GPIO_XX" 的標籤
   for (int i = 0; i < NUM_GPIOS; i++){
     snprintf(gpio_label, sizeof(gpio_label), "GPIO_%d", All_gpios[i]);
-    if (gpio_request(All_gpios[i], gpio_label) < 0){
-        pr_err("ERROR: GPIO request failed\n");
+    if (gpio_request(All_gpios[i], gpio_label) < 0){pr_err("ERROR: GPIO request failed\n");
         goto r_gpio;
     }
   }
+  if (gpio_request(GPIO_16, "GPIO_16")<0){pr_err("Failed to request GPIO_BTN\n");
+    goto r_gpio;
+  }
+  //*--------set GPIO inout----------
   for (int i = 0; i < NUM_GPIOS; i++){
     gpio_direction_output(All_gpios[i],0);  
     gpio_export(All_gpios[i],false);
   }
+  gpio_direction_input(GPIO_16);  
+  gpio_export(GPIO_16, false); 
+  //*---------done-------------------------
   pr_info("Device Driver Insert...Done!!!\n");
   return 0;
+  //? do we need gpio unexport here?
   r_gpio:
     for (int i = 0; i < NUM_GPIOS; i++){
         gpio_free(All_gpios[i]);
     }
+    gpio_free(GPIO_16);
   r_device:
     device_destroy(dev_class,dev);
   r_class:
@@ -275,6 +289,9 @@ static void __exit etx_driver_exit(void){
     gpio_unexport(All_gpios[i]);
     gpio_free(All_gpios[i]);
   }    
+  gpio_unexport(GPIO_16); 
+  gpio_free(GPIO_16);
+  //-------------------------------------------
   device_destroy(dev_class,dev);
   class_destroy(dev_class);
   cdev_del(&etx_cdev);
