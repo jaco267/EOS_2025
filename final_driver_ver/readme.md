@@ -46,8 +46,10 @@ pi$ echo "7seg 7" > /dev/etx_device
 #* 7seg turn off 
 pi$ echo "7seg g" > /dev/etx_device
 
+# 可以透過 gpio 看 各個gpio 和 按鈕狀態 
 pi$ cat /dev/etx_device
-
+# leds state: GPIO_14:0, GPIO_15:0, GPIO_18:0, GPIO_17:0, GPIO_27:0, GPIO_22:0, GPIO_10:0, GPIO_9:0, GPIO_11:0, GPIO_0:0
+# BTN:1
 
 # rpi$ 關機  
 # pi$ sudo shutdown -h now
@@ -55,7 +57,7 @@ pi$ cat /dev/etx_device
 
 ### todo 
 #### 重要  
-- todo : button  
+- todo : button driver 已經完成  但是還沒整合到 room_server
 - todo : rfid  
 - todo : ncurse
 - todo : led 7seg 目前只有status 的時候會更新狀態, 能否在 timeout 時自動更新led (used->timeout release, reserve -> timeout relase)   
