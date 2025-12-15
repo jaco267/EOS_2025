@@ -64,10 +64,12 @@ void* client_handler(void* arg) {
         snprintf(response, sizeof(response), "ERROR Room %d reservation failed. Daily limit reached.", room_id);
       } else if (res == -4) {
         snprintf(response, sizeof(response),
-               "Room %d is not free.\n"
-               "You have been added to the waiting list.\n"
-               "When the current session ends, the room will be reserved for a waiting client automatically.",
-               room_id);
+          "Room %d is not free.\n""You have been added to the waiting list.\n",
+          room_id);
+      } else if (res == -5) {
+        snprintf(response, sizeof(response),
+          "Room %d is not free.\n""cant add to waiting list, since the waiting queue is full.\n",
+          room_id);
       }else {
           snprintf(response, sizeof(response), "ERROR Room %d reservation failed. Room is not free.", room_id);
       }

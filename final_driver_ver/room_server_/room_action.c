@@ -87,6 +87,9 @@ int reserve_room(int room_id, int user_id) {
     if (r->reserve_count_today >= 2) {
         pthread_mutex_unlock(&room_mutex); return -3;
     }
+    //todo  這裡有個 bug 就是 一天內如果在 free 的狀態下 reserve , 等到auto release free 再 reserve 的話只能兩次(reserve_count_today++)
+    //todo 但是假如 reserve -> checkin-> inuse,  在這種狀態下就可以瘋狂reserve 超過兩次？
+    //todo 也許次數限制改成 checkin 而不是 reserve 比較合理？
     if (r->status == FREE) {
         r->status = RESERVED;
         r->reserve_tick = get_current_tick_snapshot();
@@ -97,8 +100,7 @@ int reserve_room(int room_id, int user_id) {
         printf("[SERVER LOG] Room %d reserved at tick %llu.\n", room_id, 
             (unsigned long long)r->reserve_tick);
         return 0;
-    }
-    else {
+    } else {
         // 房間不空閒 → 加入候補隊列
         if (wait_enqueue(&r->wait_q, user_id) == 0) { // 代表加入候補成功
             pthread_mutex_unlock(&room_mutex);
