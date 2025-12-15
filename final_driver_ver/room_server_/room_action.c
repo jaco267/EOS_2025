@@ -26,24 +26,39 @@ char* get_all_status(int room_id) {
         if (room_id!=-1){
             if (i != room_id){continue;}
         }
-        char tmp[200];
+        char tmp[512];
         uint64_t elapsed_ticks = 0; //* reserve or checkin 狀態過了多久
         if (rooms[i].status != FREE) {
-            if (now_tick >= rooms[i].reserve_tick)
-                elapsed_ticks = now_tick - rooms[i].reserve_tick;
-            else
-                elapsed_ticks = 0; // unlikely
+          if (now_tick >= rooms[i].reserve_tick)  elapsed_ticks = now_tick - rooms[i].reserve_tick;
+          else                                    elapsed_ticks = 0; // unlikely
         }
         long elapsed_sec = (elapsed_ticks * TICK_MS) / 1000;
+        //*----obtain wait list user ids   [usr1,usr2,...]-------
+        char wait_buf[128]; wait_buf[0] = '\0'; 
+        if (rooms[i].wait_q.count == 0) {strcpy(wait_buf,"[]"); }
+        else{
+            strcat(wait_buf,"["); 
+            for(int j=0; j<rooms[i].wait_q.count; j++){
+                int idx = (rooms[i].wait_q.head + j) % MAX_WAITING; 
+                char num[16]; 
+                snprintf(num, sizeof(num), "%d", rooms[i].wait_q.users[idx]);
+                strcat(wait_buf,num); 
+                if (j != rooms[i].wait_q.count - 1) strcat(wait_buf, ",");
+            }
+            strcat(wait_buf,"]");
+        }
+
         snprintf(tmp, sizeof(tmp),
-                 "Room %d | %s%s | User id: %d | Reserve Count: %d | wait count: %d | Time Elapsed: %lds\n",
+"Room %d | %s%s | Uid: %d | Reserve Count: %d | Time Elapsed: %lds\n\
+       | wait count: %d | wait queue: %s\n",
                  rooms[i].id,
                  get_status_str(rooms[i].status),
                  rooms[i].extend_used ? " (Extended)" : "",
                    rooms[i].user_id, 
                 rooms[i].reserve_count_today,
+                (rooms[i].status != FREE) ? elapsed_sec : 0L,
                  rooms[i].wait_q.count,
-                 (rooms[i].status != FREE) ? elapsed_sec : 0L);
+                 wait_buf);
         strncat(resp, tmp, required_size - strlen(resp) - 1);
     }
     strncat(resp, "-------------------\n", required_size - strlen(resp) - 1);
@@ -58,7 +73,6 @@ char* get_all_status(int room_id) {
             goto r_unlock; 
         }
         char led_id_str[MAX_NAME_LEN];
-        
         snprintf(led_id_str, sizeof(led_id_str), "7seg %d", room_id);
         ssize_t ret = write(fd_write, led_id_str, strlen(led_id_str));
         if (ret < 0) {perror("Failed to write to 7seg");}
