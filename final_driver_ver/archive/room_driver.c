@@ -84,35 +84,12 @@ static char Seg_7_map[17] ={
 static int btn_irq; 
 static atomic_t btn_pressed = ATOMIC_INIT(0); 
 static wait_queue_head_t btn_wq;
-//* debounce 
-#define DEBOUNCE_MS 500
 
-static unsigned long last_irq_time = 0;
-// static irqreturn_t button_isr(int irq, void *dev_id){
-//   if (gpio_get_value(GPIO_16) == 0) {
-//     atomic_set(&btn_pressed, 1);
-//     wake_up_interruptible(&btn_wq);
-//   }
-//   return IRQ_HANDLED;
-// }
-static irqreturn_t button_isr(int irq, void *dev_id)
-{
-    unsigned long now = jiffies;
-
-    if (time_before(now, last_irq_time + msecs_to_jiffies(DEBOUNCE_MS))) {
-        return IRQ_HANDLED;  // 彈跳 → 忽略
-    }
-  if (gpio_get_value(GPIO_16) == 1) {
-
-    last_irq_time = now;
-
+static irqreturn_t button_isr(int irq, void *dev_id){
     atomic_set(&btn_pressed, 1);
     wake_up_interruptible(&btn_wq);
-  }
     return IRQ_HANDLED;
 }
-
-
 
 //*---------------------------
 dev_t dev = 0;
@@ -148,19 +125,55 @@ static int etx_release(struct inode *inode, struct file *file){
 // etx_read is called when we read the Device file
 static ssize_t etx_read(struct file *filp, char __user *buf, 
     size_t len, loff_t *off){
+    /*
+    //*----button 不按下  gpio16 是 1  按下變成  0 
+    char kernel_buffer[256]; // store GPIO status string 
+    int current_pos = 0; // 追蹤目前寫入到 buffer 的位置
+    ssize_t ret;
+    if (*off > 0) {return 0;} //確保只讀取一次,if file offset > 0，表示已經讀取過了，回傳 0 代表檔案結尾 (EOF)
+    current_pos += snprintf(kernel_buffer + current_pos, // 格式化結果字串 寫入開頭標籤 
+                            sizeof(kernel_buffer) - current_pos, "leds state:");
+    // 迴圈讀取並格式化每個 LED 狀態
+    for (int i = 0; i < NUM_GPIOS; i++) { //All_gpios[NUM_GPIOS]
+        uint8_t state = gpio_get_value(All_gpios[i]);
+        // 追加每個 GPIO 的狀態到字串中
+        current_pos += snprintf(kernel_buffer + current_pos, sizeof(kernel_buffer) - current_pos, 
+                                " GPIO_%d:%d%s",  All_gpios[i], state, 
+                                (i == NUM_GPIOS - 1) ? "\n" : ","); // 最後一個後面接換行，否則接逗號
+        if (current_pos >= sizeof(kernel_buffer) - 1) { // 檢查是否超過核心緩衝區大小
+             pr_warn("Read buffer overflow detected in snprintf.\n");
+             break; 
+        }
+    }
+    int btn_state = gpio_get_value(GPIO_16);
+    current_pos += snprintf(kernel_buffer + current_pos,
+      sizeof(kernel_buffer) - current_pos,  "\nBTN:%d\n", btn_state);
+    size_t required_len = current_pos;
+    // 3. 確定實際要傳送的位元組數 (與使用者提供的緩衝區長度 len 比較)
+    if (required_len > len) {   ret = len; 
+    } else {  ret = required_len;}
+    // 4. 將字串從核心空間複製到使用者空間
+    if( copy_to_user(buf, kernel_buffer, ret) > 0) { // copy_to_user(目標使用者緩衝區, 來源核心變數, 位元組數)
+        pr_err("ERROR: Not all the bytes have been copied to user\n");
+        return -EFAULT; // 回傳標準 I/O 錯誤碼
+    }
+    *off += ret; // 5. 更新檔案偏移量 (重要)
+    pr_info("Read function: Sent GPIO states, length %zd.\n", ret);
+    return ret; // 6. 回傳實際複製的位元組數 
+    */
    char kbuf[32];
    int ret;
 
    if (*off > 0)
        return 0;
-   
-   // 等待按鈕事件 「只要 btn_pressed == 0 就睡覺；變成 != 0 就醒來」
+
+   // 等待按鈕事件
    wait_event_interruptible(btn_wq,
                             atomic_read(&btn_pressed));
 
    atomic_set(&btn_pressed, 0);
 
-   snprintf(kbuf, sizeof(kbuf), "BTN:1..??\n");
+   snprintf(kbuf, sizeof(kbuf), "BTN:1\n");
 
    ret = copy_to_user(buf, kbuf, strlen(kbuf));
    if (ret)
@@ -290,9 +303,7 @@ static int __init etx_driver_init(void){
     goto r_gpio;
   }
   if (request_irq(btn_irq, button_isr,
-      // IRQF_TRIGGER_FALLING, 
-      IRQF_TRIGGER_RISING,
-      "gpio_button_irq",  NULL)) {
+      IRQF_TRIGGER_FALLING, "gpio_button_irq",  NULL)) {
     pr_err("Failed to request IRQ\n");
     goto r_gpio;
   }
