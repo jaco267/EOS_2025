@@ -23,6 +23,8 @@ void* timer_worker(void* arg) {
         last_seen_tick = now_tick;
 
         pthread_mutex_lock(&room_mutex);
+        // [AUTO-HW] 新增：只要選取房間的狀態有變更，最後統一更新一次硬體
+        int hw_dirty = 0;
 
         // reset daily counters (sim day)
         time_t now_sec = time(NULL);
@@ -70,6 +72,9 @@ void* timer_worker(void* arg) {
                             user_clear_active_locked(next_user);
                         }
                     }
+                     // [AUTO-HW] 新增：timeout 導致狀態變更，若影響到選取房就標記
+                    if (i == g_selected_room) hw_dirty = 1;
+
                 }
             } else if (r->status == IN_USE) {
                 uint64_t allowed = SLOT_TICKS + (r->extend_used ? SLOT_TICKS : 0);
@@ -102,9 +107,14 @@ void* timer_worker(void* arg) {
                             user_clear_active_locked(next_user);
                         }
                     }
+                     // [AUTO-HW] 新增：timeout 導致狀態變更，若影響到選取房就標記
+                    if (i == g_selected_room) hw_dirty = 1;
+
                 }
             }
         }
+        // [AUTO-HW] 新增：只在需要時更新一次（避免每個 room timeout 都寫硬體）
+        if (hw_dirty) update_display_selected_locked();
 
         pthread_mutex_unlock(&room_mutex);
 

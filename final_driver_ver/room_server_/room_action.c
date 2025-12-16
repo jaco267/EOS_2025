@@ -22,16 +22,11 @@ static void hw_update_selected_room_locked(int room_id) {
     int fd = open(DEVICE_FILE, O_WRONLY);
     if (fd < 0) return;
 
-    // 7seg: show last 2 digits of user_id (loops in driver, 1 sec each digit)
-    char cmd[64];
-    int uid = rooms[room_id].user_id;
+    // [AUTO-HW] 修改：7seg 改顯示「房號」(00~11)，不再顯示 user_id 末兩碼
+	char cmd[64];
+	snprintf(cmd, sizeof(cmd), "7seg %02d", rooms[room_id].id);  // 或直接用 room_id
+	(void)write(fd, cmd, strlen(cmd));
 
-    if (uid > 0) {
-        snprintf(cmd, sizeof(cmd), "7seg %02d", uid % 100);
-    } else {
-        snprintf(cmd, sizeof(cmd), "7seg g"); // turn off
-    }
-    (void)write(fd, cmd, strlen(cmd));
 
     // LED: show room status (FREE=1, RESERVED=2, IN_USE=3)
     int led_id = (int)rooms[room_id].status + 1;
@@ -40,7 +35,14 @@ static void hw_update_selected_room_locked(int room_id) {
 
     close(fd);
 }
-
+// [AUTO-HW] 新增：統一入口，更新「目前選取房間 g_selected_room」的 LED/7seg
+// caller 必須已經持有 room_mutex
+int update_display_selected_locked(void) {
+    // caller holds room_mutex
+    if (g_selected_room < 0 || g_selected_room >= MAX_ROOMS) return -1;
+    hw_update_selected_room_locked(g_selected_room);
+    return 0;
+}
 char* get_all_status(int room_id) {
     pthread_mutex_lock(&room_mutex);
 
@@ -99,11 +101,12 @@ char* get_all_status(int room_id) {
     }
 
     strncat(resp, "-------------------\n", required_size - strlen(resp) - 1);
-
+    // [AUTO-HW] 修改：不在 status() 裡直接更新硬體
+    // 硬體更新改由「狀態變更事件」(reserve/checkin/release/timeout/promote) 自動觸發
     // only when selecting a room, update HW to avoid pin shortage
-    if (room_id != -1 && room_id >= 0 && room_id < MAX_ROOMS) {
-        hw_update_selected_room_locked(room_id);
-    }
+    //if (room_id != -1 && room_id >= 0 && room_id < MAX_ROOMS) {
+    //    hw_update_selected_room_locked(room_id);
+    //}
 
     pthread_mutex_unlock(&room_mutex);
     return resp;
@@ -155,10 +158,17 @@ int reserve_room(int room_id, int user_id, const char* name) {
         r->reserve_count_today++;
 
         user_mark_reserved_locked(user_id, room_id);
-
+        // [AUTO-HW] 新增：若本房是選取房，狀態變更後立刻更新 LED/7seg
+        //if (room_id == g_selected_room) update_display_selected_locked();
+        // [AUTO-HW] 修改：reserve 成功後，直接把顯示切到這間房
+        g_selected_room = room_id;
+        update_display_selected_locked();
         pthread_mutex_unlock(&room_mutex);
         printf("[SERVER LOG] Room %d reserved by user %d.\n", room_id, user_id);
         return 0;
+        //pthread_mutex_unlock(&room_mutex);
+        //printf("[SERVER LOG] Room %d reserved by user %d.\n", room_id, user_id);
+        //return 0;
     }
 
     // room busy -> wait queue (avoid duplicates)
@@ -199,10 +209,18 @@ int check_in(int room_id, int user_id) {
     r->extend_used = 0;
 
     if (r->user_id > 0) user_mark_inuse_locked(r->user_id, room_id);
+    // [AUTO-HW] 新增：checkin 狀態變更後自動更新硬體
+    //if (room_id == g_selected_room) update_display_selected_locked();
+    // [AUTO-HW] 修改：checkin 成功後，直接把顯示切到這間房
+    g_selected_room = room_id;
+    update_display_selected_locked();
 
     pthread_mutex_unlock(&room_mutex);
     printf("[SERVER LOG] Room %d checked in.\n", room_id);
     return 0;
+    //pthread_mutex_unlock(&room_mutex);
+    //printf("[SERVER LOG] Room %d checked in.\n", room_id);
+    //return 0;
 }
 
 int release_room(int room_id, int user_id) {
@@ -249,6 +267,11 @@ int release_room(int room_id, int user_id) {
             printf("[SERVER LOG] Room %d: dequeued user %d but cannot assign.\n", room_id, next_user);
         }
     }
+// [AUTO-HW] 新增：release/遞補造成狀態變更後，自動更新硬體
+    //if (room_id == g_selected_room) update_display_selected_locked();
+    // [AUTO-HW] 修改：release/遞補完成後，直接把顯示切到這間房
+    g_selected_room = room_id;
+    update_display_selected_locked();
 
     pthread_mutex_unlock(&room_mutex);
     return 0;
@@ -271,6 +294,7 @@ int extend_room(int room_id, int user_id) {
     }
 
     r->extend_used = 1;
+    
     pthread_mutex_unlock(&room_mutex);
 
     printf("[SERVER LOG] Room %d extended.\n", room_id);

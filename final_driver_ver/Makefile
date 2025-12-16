@@ -8,6 +8,7 @@ CROSS_COMPILE ?= aarch64-linux-gnu-
 
 # ===== User-space build (server/client) =====
 CFLAGS += -O2 -Wall -Wextra -pthread
+USER_CC ?= gcc
 
 SRC_client = room_client.c
 SRC_test   = test_driver.c
@@ -27,14 +28,15 @@ all:
 user: room_client test_driver room_server
 
 room_server: $(SRC_server)
-	gcc $(CFLAGS) -o $@ $^
+	$(USER_CC) $(CFLAGS) -o $@ $^
 
 test_driver: $(SRC_test)
-	gcc $(CFLAGS) -o $@ $^
+	$(USER_CC) $(CFLAGS) -o $@ $^
 
 room_client: $(SRC_client)
-	gcc $(CFLAGS) -o $@ $^
+	$(USER_CC) $(CFLAGS) -o $@ $^
 
 clean:
 	$(MAKE) -C $(LINUX_KERNEL_PATH) M=$(PWD) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) clean
 	rm -f room_client room_server test_driver
+
