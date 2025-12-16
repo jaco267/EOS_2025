@@ -88,28 +88,18 @@ static wait_queue_head_t btn_wq;
 #define DEBOUNCE_MS 500
 
 static unsigned long last_irq_time = 0;
-// static irqreturn_t button_isr(int irq, void *dev_id){
-//   if (gpio_get_value(GPIO_16) == 0) {
-//     atomic_set(&btn_pressed, 1);
-//     wake_up_interruptible(&btn_wq);
-//   }
-//   return IRQ_HANDLED;
-// }
-static irqreturn_t button_isr(int irq, void *dev_id)
-{
+static irqreturn_t button_isr(int irq, void *dev_id){
     unsigned long now = jiffies;
-
     if (time_before(now, last_irq_time + msecs_to_jiffies(DEBOUNCE_MS))) {
         return IRQ_HANDLED;  // 彈跳 → 忽略
     }
+  //應為是接上 vdd : 沒按 gpio_16= 0 , 按下  gpio_16=1
   if (gpio_get_value(GPIO_16) == 1) {
-
     last_irq_time = now;
-
     atomic_set(&btn_pressed, 1);
     wake_up_interruptible(&btn_wq);
   }
-    return IRQ_HANDLED;
+  return IRQ_HANDLED;
 }
 
 
@@ -160,7 +150,7 @@ static ssize_t etx_read(struct file *filp, char __user *buf,
 
    atomic_set(&btn_pressed, 0);
 
-   snprintf(kbuf, sizeof(kbuf), "BTN:1..??\n");
+   snprintf(kbuf, sizeof(kbuf), "BTN:1\n");
 
    ret = copy_to_user(buf, kbuf, strlen(kbuf));
    if (ret)

@@ -10,6 +10,7 @@
 #include <time.h>
 #include <pthread.h>
 #include <sys/socket.h>
+#include <fcntl.h>  //* open O_RDONLY
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/time.h>
@@ -24,7 +25,28 @@
 
 // 你應該會在某個 .c 定義它（例如 globe_var.c）
 extern int g_selected_room;
+void* button_listener(void* arg){
 
+    while (1) {
+        int fd = open("/dev/etx_device", O_RDONLY);
+        if (fd < 0) {   perror("open /dev/etx_device failed");return NULL;}
+        char buf[128];
+        ssize_t n = read(fd, buf, sizeof(buf)-1);
+        if (n <= 0) continue;
+        buf[n] = '\0';  // 確保字串結尾
+        printf("reseive : %s\n", buf);
+        if (strstr(buf, "BTN:1")) {
+            // pthread_mutex_lock(&room_mutex);
+            printf("todo: .... [SYSTEM] Enter CHECK-IN mode. Please input room_id.\n");
+
+            // pthread_mutex_unlock(&room_mutex);
+        }
+        close(fd);
+    }
+
+   
+    return NULL;
+}
 // --------- helpers ---------
 
 static void send_text(int sock, const char *msg) {
@@ -245,6 +267,13 @@ int main() {
         return 1;
     }
     pthread_detach(tid_timer);
+    pthread_t tid_btn;
+    if (pthread_create(&tid_btn, NULL, button_listener, NULL) != 0) {
+        perror("pthread_create button_listener");
+        return 1;
+    }
+    pthread_detach(tid_btn); // 不想 join，讓它自己跑
+    //* start button listener thread 
 
     // setup network server
     int server_fd;
@@ -253,10 +282,7 @@ int main() {
     socklen_t addrlen = sizeof(address);
 
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (server_fd < 0) {
-        perror("socket failed");
-        return 1;
-    }
+    if (server_fd < 0) { perror("socket failed");return 1;}
 
     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)) != 0) {
         perror("setsockopt");
