@@ -125,14 +125,13 @@ static int etx_release(struct inode *inode, struct file *file){
 // etx_read is called when we read the Device file
 static ssize_t etx_read(struct file *filp, char __user *buf, 
     size_t len, loff_t *off){
-      //*----button 不按下  gpio16 是 1  按下變成  0 
+    /*
+    //*----button 不按下  gpio16 是 1  按下變成  0 
     char kernel_buffer[256]; // store GPIO status string 
     int current_pos = 0; // 追蹤目前寫入到 buffer 的位置
     ssize_t ret;
-    // 1. 
-    if (*off > 0) {return 0;} //處理檔案偏移量(確保只讀取一次). if offset > 0，表示已經讀取過了，回傳 0 代表檔案結尾 (EOF)
-    // 2. 格式化結果字串 寫入開頭標籤
-    current_pos += snprintf(kernel_buffer + current_pos, 
+    if (*off > 0) {return 0;} //確保只讀取一次,if file offset > 0，表示已經讀取過了，回傳 0 代表檔案結尾 (EOF)
+    current_pos += snprintf(kernel_buffer + current_pos, // 格式化結果字串 寫入開頭標籤 
                             sizeof(kernel_buffer) - current_pos, "leds state:");
     // 迴圈讀取並格式化每個 LED 狀態
     for (int i = 0; i < NUM_GPIOS; i++) { //All_gpios[NUM_GPIOS]
@@ -148,8 +147,7 @@ static ssize_t etx_read(struct file *filp, char __user *buf,
     }
     int btn_state = gpio_get_value(GPIO_16);
     current_pos += snprintf(kernel_buffer + current_pos,
-      sizeof(kernel_buffer) - current_pos,
-      "\nBTN:%d\n", btn_state);
+      sizeof(kernel_buffer) - current_pos,  "\nBTN:%d\n", btn_state);
     size_t required_len = current_pos;
     // 3. 確定實際要傳送的位元組數 (與使用者提供的緩衝區長度 len 比較)
     if (required_len > len) {   ret = len; 
@@ -162,6 +160,27 @@ static ssize_t etx_read(struct file *filp, char __user *buf,
     *off += ret; // 5. 更新檔案偏移量 (重要)
     pr_info("Read function: Sent GPIO states, length %zd.\n", ret);
     return ret; // 6. 回傳實際複製的位元組數 
+    */
+   char kbuf[32];
+   int ret;
+
+   if (*off > 0)
+       return 0;
+
+   // 等待按鈕事件
+   wait_event_interruptible(btn_wq,
+                            atomic_read(&btn_pressed));
+
+   atomic_set(&btn_pressed, 0);
+
+   snprintf(kbuf, sizeof(kbuf), "BTN:1\n");
+
+   ret = copy_to_user(buf, kbuf, strlen(kbuf));
+   if (ret)
+       return -EFAULT;
+
+   *off += strlen(kbuf);
+   return strlen(kbuf);
 }
 //! When we call echo (0 or 1) > /dev/ext_device
 // This function will be called when we write the Device file

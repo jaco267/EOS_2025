@@ -1,1 +1,0 @@
-cmd_/home/elton/Desktop/EOS_2025/final_driver_ver/Module.symvers :=  sed 's/ko$$/o/'  /home/elton/Desktop/EOS_2025/final_driver_ver/modules.order | scripts/mod/modpost -m -a     -o /home/elton/Desktop/EOS_2025/final_driver_ver/Module.symvers -e -i Module.symvers -T - 
