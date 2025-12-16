@@ -36,10 +36,11 @@ void* button_listener(void* arg){
         buf[n] = '\0';  // 確保字串結尾
         printf("reseive : %s\n", buf);
         if (strstr(buf, "BTN:1")) {
+            char response[2048] = {0};
             // pthread_mutex_lock(&room_mutex);
             printf("todo: .... [SYSTEM] Enter CHECK-IN mode. Please input room_id.\n");
-
-            // pthread_mutex_unlock(&room_mutex);
+            int room_id = g_selected_room;
+            int res = check_in(g_selected_room, -1); 
         }
         close(fd);
     }
