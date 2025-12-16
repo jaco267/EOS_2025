@@ -79,7 +79,16 @@ void* timer_worker(void* arg) {
             } else if (r->status == IN_USE) {
                 uint64_t allowed = SLOT_TICKS + (r->extend_used ? SLOT_TICKS : 0);
                 uint64_t elapsed = (now_tick >= r->reserve_tick) ? (now_tick - r->reserve_tick) : 0;
-
+                // [AUTO-WARN] 新增：剩餘 5 秒提醒（只印一次）
+                if (elapsed < allowed) {
+                uint64_t remain = allowed - elapsed;
+                if (remain <= WARN_TICKS && r->warn_5s_sent == 0) {
+                printf("[TIMER] Room %d: %d seconds remaining (uid=%d)\n",
+                   i, WARN_REMAIN_SEC, r->user_id);
+                fflush(stdout);
+                r->warn_5s_sent = 1;
+        }
+    }
                 if (elapsed >= allowed) {
                     int old_user = r->user_id;
                     printf("[TIMER] Room %d session ended. Auto-release.\n", i);
@@ -87,6 +96,7 @@ void* timer_worker(void* arg) {
                     r->status = FREE;
                     r->extend_used = 0;
                     r->reserve_tick = 0;
+                    r->warn_5s_sent = 0; // [AUTO-WARN] 新增：狀態切回 FREE/RESERVED 時清提醒
                     r->user_id = -1;
 
                     if (old_user > 0) user_clear_active_locked(old_user);
@@ -97,6 +107,8 @@ void* timer_worker(void* arg) {
                             r->status = RESERVED;
                             r->reserve_tick = now_tick;
                             r->extend_used = 0;
+                            r->warn_5s_sent = 0; // [AUTO-WARN] 新增：候補接手後重新允許提醒
+
                             r->user_id = next_user;
                             r->reserve_count_today++;
 

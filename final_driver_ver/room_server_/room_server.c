@@ -208,6 +208,7 @@ int main() {
         rooms[i].wait_q.count = 0;
 
         rooms[i].reserve_count_today = 0;
+        rooms[i].warn_5s_sent = 0; // [AUTO-WARN] 新增
     }
 
     // default selected room (optional)

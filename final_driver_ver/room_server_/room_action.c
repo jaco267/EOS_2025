@@ -155,6 +155,7 @@ int reserve_room(int room_id, int user_id, const char* name) {
         r->reserve_tick = get_current_tick_snapshot();
         r->extend_used = 0;
         r->user_id = user_id;
+        r->warn_5s_sent = 0; // [AUTO-WARN] 新增：新預約先清提醒
         r->reserve_count_today++;
 
         user_mark_reserved_locked(user_id, room_id);
@@ -205,6 +206,7 @@ int check_in(int room_id, int user_id) {
     }
 
     r->status = IN_USE;
+    r->warn_5s_sent = 0; // [AUTO-WARN] 新增：開始使用，清提醒
     r->reserve_tick = get_current_tick_snapshot();
     r->extend_used = 0;
 
@@ -244,6 +246,7 @@ int release_room(int room_id, int user_id) {
     r->status = FREE;
     r->extend_used = 0;
     r->reserve_tick = 0;
+    r->warn_5s_sent = 0; // [AUTO-WARN] 新增：釋放後清提醒
     r->user_id = -1;
 
     if (old_user > 0) user_clear_active_locked(old_user);
@@ -255,6 +258,7 @@ int release_room(int room_id, int user_id) {
             r->status = RESERVED;
             r->reserve_tick = get_current_tick_snapshot();
             r->extend_used = 0;
+            r->warn_5s_sent = 0; // [AUTO-WARN] 新增：候補接手，清提醒
             r->user_id = next_user;
             r->reserve_count_today++;
 
@@ -294,7 +298,7 @@ int extend_room(int room_id, int user_id) {
     }
 
     r->extend_used = 1;
-    
+    r->warn_5s_sent = 0; // [AUTO-WARN] 新增：延長後，允許在最終 5 秒再提醒一次
     pthread_mutex_unlock(&room_mutex);
 
     printf("[SERVER LOG] Room %d extended.\n", room_id);

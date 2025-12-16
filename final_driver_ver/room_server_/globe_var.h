@@ -6,7 +6,7 @@
 #include "wait_queue.h"
 
 // system config
-#define MAX_ROOMS 5
+#define MAX_ROOMS 12
 #define PORT 8080
 
 
@@ -20,6 +20,10 @@
 
 #define TICK_MS 100             // tick granularity (milliseconds)
 #define TICKS_PER_SEC (1000 / TICK_MS)
+
+// [AUTO-WARN] 新增：剩餘 5 秒提醒用
+#define WARN_REMAIN_SEC 5
+#define WARN_TICKS (WARN_REMAIN_SEC * TICKS_PER_SEC)
 
 // Derived tick counts
 #define SLOT_TICKS (SLOT_DURATION * TICKS_PER_SEC)
@@ -35,6 +39,8 @@ typedef struct {
     int user_id;             //* 輸入學號  
     int reserve_count_today; //* 單日預約過幾次   超過兩次會鎖住   
     wait_queue_t wait_q;     // 候補隊列 <id1,id2,id3,...>
+
+     int warn_5s_sent; // [AUTO-WARN] 新增：最後 5 秒提醒
 } room_t;
 
 // shared resources
