@@ -69,6 +69,10 @@ pi$ cat /dev/etx_device
 - todo : [elton] button 之後 直接 checkin
 - todo : [elton] checkout 取消輸入 id  因為時間不夠   
 - todo : [佳鴻] rfid  
+  - [github](https://github.com/wzyy2/My_Linux_Driver/tree/master)
+  - [csdn blog](https://www.cnblogs.com/jzcn/p/17171811.html)
+  - 搜尋 rfid rc522 linux driver 
+  - 搜尋 rfid rc522 linux driver github
 - todo : [elton] ncurse
 - todo : [嘉詳]倒數時間     
 - todo : [嘉詳]status 顯示 register 的 資訊
