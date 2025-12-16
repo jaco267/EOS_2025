@@ -66,13 +66,12 @@ pi$ cat /dev/etx_device
 
 ### todo 
 #### 重要  
-- todo : [half elton] button driver 已經完成  但是還沒整合到 room_server
-- todo : [half 加洪] rfid  
-- todo : [hard elton] ncurse
-- todo : [v] led 7seg 目前只有status 的時候會更新狀態, 能否在 timeout 時自動更新led (used->timeout release, reserve -> timeout relase)
-- todo : [加詳] checkout 取消輸入 id  因為時間不夠   
-- todo : 倒數時間     
-- todo : status 顯示 register 的 資訊
+- todo : [elton] button 之後 直接 checkin
+- todo : [elton] checkout 取消輸入 id  因為時間不夠   
+- todo : [佳鴻] rfid  
+- todo : [elton] ncurse
+- todo : [嘉詳]倒數時間     
+- todo : [嘉詳]status 顯示 register 的 資訊
 #### 次要
 -  todo  release：只允許使用者本人釋放
 -  todo  check_in：只允許原本預約的人
@@ -81,6 +80,8 @@ pi$ cat /dev/etx_device
 - user-based daily limit (不是 room-based)
 
 
+#### 已完成
+- [v][嘉詳] led 7seg 目前只有status 的時候會更新狀態, 能否在 timeout 時自動更新led (used->timeout release, reserve -> timeout relase)
 
 
 #### led pin,  現在只要把 三個 led 接上 gpio14,15,18 就好了 (之後會當成 state(reserve, used, free), 但我還沒寫)
