@@ -1,3 +1,5 @@
+- [rpi 連接無線網路](https://hackmd.io/@vin0719/HyycBxnjn)
+- button 不按下  gpio16 是 1  按下變成  0 
 - makefile 記得 linux kernel path 要改成自己電腦上的路徑   (不是 /home/elton/Desktop...)
 - scp 的路徑也要改成自己的設定 (不是 elton@192...)  
 - 目前有新增加 user_id  所以 reserve cmd 變成   
