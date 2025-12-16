@@ -66,10 +66,13 @@ pi$ cat /dev/etx_device
 
 ### todo 
 #### 重要  
-- todo : button driver 已經完成  但是還沒整合到 room_server
-- todo : rfid  
-- todo : ncurse
-- todo : led 7seg 目前只有status 的時候會更新狀態, 能否在 timeout 時自動更新led (used->timeout release, reserve -> timeout relase)   
+- todo : [half elton] button driver 已經完成  但是還沒整合到 room_server
+- todo : [half 加洪] rfid  
+- todo : [hard elton] ncurse
+- todo : [v] led 7seg 目前只有status 的時候會更新狀態, 能否在 timeout 時自動更新led (used->timeout release, reserve -> timeout relase)
+- todo : [加詳] checkout 取消輸入 id  因為時間不夠   
+- todo : 倒數時間     
+- todo : 
 #### 次要
 -  todo  release：只允許使用者本人釋放
 -  todo  check_in：只允許原本預約的人
