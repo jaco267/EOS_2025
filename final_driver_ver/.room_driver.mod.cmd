@@ -1,1 +1,0 @@
-cmd_/home/ncrl/EOS_2025/final_driver_ver/room_driver.mod := printf '%s\n'   room_driver.o | awk '!x[$$0]++ { print("/home/ncrl/EOS_2025/final_driver_ver/"$$0) }' > /home/ncrl/EOS_2025/final_driver_ver/room_driver.mod
