@@ -24,7 +24,7 @@ static void hw_update_selected_room_locked(int room_id) {
 
     // [AUTO-HW] 修改：7seg 改顯示「房號」(00~11)，不再顯示 user_id 末兩碼
 	char cmd[64];
-	snprintf(cmd, sizeof(cmd), "7seg %02d", rooms[room_id].id);  // 或直接用 room_id
+	snprintf(cmd, sizeof(cmd), "7seg %d", rooms[room_id].id);  // 或直接用 room_id
 	(void)write(fd, cmd, strlen(cmd));
 
 
