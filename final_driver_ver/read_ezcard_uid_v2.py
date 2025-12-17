@@ -21,6 +21,8 @@ def send_reserve(uid_hex):
             sock.connect((SERVER_IP, SERVER_PORT))
             cmd = f"reserve -1 {uid_hex}\n"
             sock.sendall(cmd.encode())
+            resp = sock.recv(1024).decode().strip()
+            print(f"[server] {resp}")
     except Exception as e:
         print(f"[socket error] {e}")
 
