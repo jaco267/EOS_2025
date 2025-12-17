@@ -6,11 +6,9 @@
 #include "wait_queue.h"
 
 // system config
-#define MAX_ROOMS 5
+#define MAX_ROOMS 3
 #define PORT 8080
-
-
-
+#define MAX_RESERVE_COUNT_DAILY 5  
 #define DEVICE_FILE "/dev/etx_device"
 #define MAX_NAME_LEN 30 
 // durations are still specified in seconds for easy reading.
