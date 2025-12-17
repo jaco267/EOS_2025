@@ -39,6 +39,7 @@ pi$ echo "led 0" > /dev/etx_device
 ##### run server 
 pi$ ./room_server
 pi$ ./room_client   
+pi$ python read_rfid.py
 #* status
 #* status  0    #只單純查看房間0 的狀態 led1 亮起 代表 free  
 #* reserve 0 312513129
