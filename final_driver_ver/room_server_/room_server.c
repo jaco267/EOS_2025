@@ -256,7 +256,7 @@ void* client_handler(void* arg) {
 
 cleanup:
     close(client_sock);
-    remove_client(client_sock);
+    remove_client(client_sock);  //todo  check this 
     return NULL;
 }
 
@@ -279,7 +279,7 @@ int main() {
 
         rooms[i].reserve_count_today = 0;
     }
-
+    init_clients();  //* init connections 
     // default selected room (optional)
     g_selected_room = 0;
 
