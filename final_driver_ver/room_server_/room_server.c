@@ -23,25 +23,73 @@
 #include "room_timer.h"
 #include "user_db.h"
 
+typedef struct {
+    int sock;
+    int user_id;
+} client_t;
+client_t clients[MAX_USERS];  //todo not max_user, its max_terminal 
+pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
+void init_clients(void) {
+    for (int i = 0; i < MAX_USERS; i++) {
+        clients[i].sock = 0;
+        clients[i].user_id = -1;
+    }
+}
+// 註冊 client 時加入 clients[]
+void add_client(int sock, int user_id) {
+    pthread_mutex_lock(&clients_mutex);
+    for (int i = 0; i < MAX_USERS; i++) {
+        if (clients[i].sock == 0) {
+            clients[i].sock = sock;
+            clients[i].user_id = user_id;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&clients_mutex);
+}
+// client 離線或斷線時清空
+void remove_client(int sock) {
+    pthread_mutex_lock(&clients_mutex);
+    for (int i = 0; i < MAX_USERS; i++) {
+        if (clients[i].sock == sock) {
+            clients[i].sock = 0;
+            clients[i].user_id = -1;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&clients_mutex);
+}
+
 // 你應該會在某個 .c 定義它（例如 globe_var.c）
 extern int g_selected_room;
 void* button_listener(void* arg){
-
     while (1) {
         int fd = open("/dev/etx_device", O_RDONLY);
         if (fd < 0) {   perror("open /dev/etx_device failed");return NULL;}
         char buf[128];
         ssize_t n = read(fd, buf, sizeof(buf)-1);
-        if (n <= 0) continue;
+        if (n <= 0){close(fd); continue;}
         buf[n] = '\0';  // 確保字串結尾
         printf("reseive : %s\n", buf);
         if (strstr(buf, "BTN:1")) {
-            // pthread_mutex_lock(&room_mutex);
-            printf("todo: .... [SYSTEM] Enter CHECK-IN mode. Please input room_id.\n");
-
-            // pthread_mutex_unlock(&room_mutex);
+            printf("todo: .... [SYSTEM] CHECK-IN g_selected_room .\n");
+            int res = check_in(g_selected_room, -1); // -1 表示自動 check-in
+            // 通知已註冊 client
+            char msg[256];
+            if (res == 0)
+                snprintf(msg, sizeof(msg), "OK Room %d checked in (button).\n", g_selected_room);
+            else
+                snprintf(msg, sizeof(msg), "ERROR Room %d check-in failed (button).\n", g_selected_room);
+            pthread_mutex_lock(&clients_mutex);
+            for (int i = 0; i < MAX_USERS; i++) {
+                if (clients[i].sock > 0) {
+                    send(clients[i].sock, msg, strlen(msg), 0);
+                }
+            }
+            pthread_mutex_unlock(&clients_mutex);
         }
         close(fd);
+        usleep(100000); // 避免 busy loop，100ms
     }
 
    
@@ -71,7 +119,7 @@ static void usage(char *out, size_t n) {
 void* client_handler(void* arg) {
     int client_sock = *(int*)arg;
     free(arg);
-
+    add_client(client_sock,-1);  //tododo  remove uid
     char buffer[1024] = {0};
     char response[2048] = {0};
 
@@ -84,7 +132,6 @@ void* client_handler(void* arg) {
     // quick cmd peek
     char cmd[32] = {0};
     sscanf(buffer, "%31s", cmd);
-
     // -------- register <user_id> <name...> --------
     if (strcmp(cmd, "register") == 0) {
         int uid = -1, n = 0;
@@ -209,6 +256,7 @@ void* client_handler(void* arg) {
 
 cleanup:
     close(client_sock);
+    remove_client(client_sock);  //todo  check this 
     return NULL;
 }
 
@@ -231,7 +279,7 @@ int main() {
 
         rooms[i].reserve_count_today = 0;
     }
-
+    init_clients();  //* init connections 
     // default selected room (optional)
     g_selected_room = 0;
 

@@ -199,10 +199,10 @@ int check_in(int room_id, int user_id) {
         return -1;
     }
 
-    if (user_id != -1 && r->user_id != user_id) {
-        pthread_mutex_unlock(&room_mutex);
-        return -8; // not owner
-    }
+    // if (user_id != -1 && r->user_id != user_id) {
+    //     pthread_mutex_unlock(&room_mutex);
+    //     return -8; // not owner
+    // }
 
     r->status = IN_USE;
     r->reserve_tick = get_current_tick_snapshot();
