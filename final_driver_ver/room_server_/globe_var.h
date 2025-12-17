@@ -6,7 +6,7 @@
 #include "wait_queue.h"
 
 // system config
-#define MAX_ROOMS 12
+#define MAX_ROOMS 5
 #define PORT 8080
 
 
