@@ -102,10 +102,10 @@ g f | a b                 GPIO  2   3  4    5v
 | f   b |             (a) GPIO 17---11 12---GPIO 18 (led3)
 |   G   |             (b) GPIO 27---13 14---gnd          
 | E   C |             (c) GPIO 22---15 16---gpio23      
-|   D . |                    3.3v   17 18---gpio24           
----------  (RFID?MOSI)    GPIO 10---19 20---gnd       
-| | | | |  (RFID?MISO)    GPIO  9---21 22---gpio25  (RFID-RST?紅)   
-e d | c Dp (RFID?SCK?)    GPIO 11---23 24---gpio8   (RFID-SDA,灰)       
+|   D . |      (RFID:咖啡)   3.3v ---17 18---gpio24           
+---------      (RFID?藍色)GPIO 10---19 20---gnd      (RFID-橘色)
+| | | | |      (RFID?綠)  GPIO  9---21 22---gpio25  (RFID-RST?紅)   
+e d | c Dp     (RFID?紫)  GPIO 11---23 24---gpio8   (RFID-SDA,灰)       
    gnd                        gnd   25 26---gpio7       
                       (d) GPIO  0---27 28---gpio1 
                       (e) GPIO  5---29 30---gnd 
@@ -126,3 +126,63 @@ GPIO  8   11  10   9    X      25
 
 
 - [button 接線](https://raspberrypihq.com/use-a-push-button-with-raspberry-pi-gpio/)
+
+
+RFID-python測試
+1. 連到樹莓派
+2. sudo raspi-config
+# Interface Options -> SPI -> Enable
+3. sudo reboot
+4. ls -l /dev/spidev*
+#預期會看到：
+  /dev/spidev0.0
+  /dev/spidev0.1
+5. 裝套件
+sudo apt update
+sudo apt install -y git python3-spidev python3-rpi.gpio python3-pip python3-dev
+sudo python3 -m pip install pi-rc522 --break-system-packages
+6. nano read_ezcard_uid.py
+   
+#!/usr/bin/env python3
+import time
+import RPi.GPIO as GPIO
+from pirc522 import RFID
+
+# 關閉 GPIO 警告：避免 "This channel is already in use" 類型提示
+GPIO.setwarnings(False)
+
+# 不用 IRQ，避免 RuntimeError: Failed to add edge detection
+rdr = RFID(pin_irq=None)
+
+def uid_to_hex(uid_bytes):
+    return ''.join(f'{b:02X}' for b in uid_bytes)
+
+try:
+    print("把悠遊卡靠近 RC522（Ctrl+C 結束）")
+    last = None
+
+    while True:
+        err, _ = rdr.request()
+        if not err:
+            err, uid = rdr.anticoll()
+            if not err and uid:
+                uid_hex = uid_to_hex(uid)
+
+                # 去抖：同一張卡不要一直狂刷輸出
+                if uid_hex != last:
+                    print(f"UID bytes: {uid}")
+                    print(f"UID hex  : {uid_hex}")
+                    print(f"UID dec  : {int(uid_hex, 16)}")
+                    print("-" * 30)
+                    last = uid_hex
+
+                time.sleep(0.6)
+
+        time.sleep(0.05)
+
+except KeyboardInterrupt:
+    pass
+finally:
+    rdr.cleanup()
+
+7.sudo python3 read_ezcard_uid.py 
