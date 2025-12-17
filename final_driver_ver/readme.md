@@ -68,8 +68,8 @@ pi$ cat /dev/etx_device
 
 ### todo 
 #### 重要  
-- todo : [elton] button 之後 直接 checkin
-- todo : [elton] checkout 取消輸入 id  因為時間不夠   
+
+
 - todo : [佳鴻] rfid  
   - [github](https://github.com/wzyy2/My_Linux_Driver/tree/master)
   - [csdn blog](https://www.cnblogs.com/jzcn/p/17171811.html)
@@ -88,35 +88,37 @@ pi$ cat /dev/etx_device
 
 #### 已完成
 - [v][嘉詳] led 7seg 目前只有status 的時候會更新狀態, 能否在 timeout 時自動更新led (used->timeout release, reserve -> timeout relase)
-
-
-#### led pin,  現在只要把 三個 led 接上 gpio14,15,18 就好了 (之後會當成 state(reserve, used, free), 但我還沒寫)
+- [v][elton] button 之後 直接 checkin
+- [v][elton] checkout 取消輸入 id  因為時間不夠   
+#### led pin,  三個 led 接上 gpio14,15,18  (當成 state(reserve, used, free))
+- RFID 還沒弄
 ```
-pin 腳                          RPi gpio pin  
-           gnd           3.3 v   ---1  2    5v                            
-        g f | a b    GPIO  2        3  4    5v                        
-        | | | | |    GPIO  3        5  6 ---gnd                       
-         -------     GPIO  4        7  8 ---GPIO 14 (led1)         
-        |   a   |        gnd        9  10---GPIO 15 (led2)         
-        | f   b |    GPIO 17  (a)---11 12---GPIO 18 (led3)       
-        |   G   |    GPIO 27  (b)---13 14---gnd                        
-        | E   C |    GPIO 22  (c)---15 16---gpio23                    
-        |   D . |        3.3v       17 18---gpio24                         
-        ---------    GPIO 10  (d)---19 20---gnd                     
-        | | | | |    GPIO  9  (e)---21 22---gpio25                   
-        e d | c Dp   GPIO 11  (f)---23 24---gpio8             
-           gnd           gnd        25 26---gpio7             
-                     GPIO  0  (g)---27 28---gpio1               
-                     GPIO  5     ---29 30---gnd               
-                     GPIO  6     ---31 32---gpio12              
-                     GPIO 13        33 34---gnd              
-                     GPIO 19        35 36---GPIO 16 (button)               
-                     GPIO 26     ---37 38---GPIO 20              
+                                  RPi gpio pin  
+   gnd                      3.3 v---1  2    5v   
+g f | a b                 GPIO  2   3  4    5v          
+| | | | |                 GPIO  3   5  6 ---gnd         
+ -------                  GPIO  4   7  8 ---GPIO 14 (led1)
+|   a   |                     gnd   9  10---GPIO 15 (led2)
+| f   b |             (a) GPIO 17---11 12---GPIO 18 (led3)
+|   G   |             (b) GPIO 27---13 14---gnd          
+| E   C |             (c) GPIO 22---15 16---gpio23      
+|   D . |                    3.3v   17 18---gpio24           
+---------  (RFID?MOSI)    GPIO 10---19 20---gnd       
+| | | | |  (RFID?MISO)    GPIO  9---21 22---gpio25  (RFID-RST?紅)   
+e d | c Dp (RFID?SCK?)    GPIO 11---23 24---gpio8   (RFID-SDA,灰)       
+   gnd                        gnd   25 26---gpio7       
+                      (d) GPIO  0---27 28---gpio1 
+                      (e) GPIO  5---29 30---gnd 
+                      (f) GPIO  6---31 32---gpio12
+                      (g) GPIO 13   33 34---gnd
+                          GPIO 19   35 36---GPIO 16 (button) 
+                          GPIO 26---37 38---GPIO 20
                              gnd    39 40---GPIO 21 
 ```
 
 ```
 RFID-RC522  
+pin    0   1   2   3     4  5   6   7
       SDA SCK MOSI MISO RQ GND RST 3x3
       灰  紫   藍   綠   黃  橘  紅  咖啡
 GPIO  8   11  10   9    X      25      

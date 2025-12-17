@@ -41,24 +41,29 @@ pin 腳                          RPi gpio pin
 #define GPIO_17 (17) //a 
 #define GPIO_27 (27) //b 
 #define GPIO_22 (22) //C
-#define GPIO_10 (10) //D 
-#define GPIO_9  (9) //E 
-#define GPIO_11 (11) //f 
-#define GPIO_0   (0) //G 
+// #define GPIO_10 (10) //D
+
+// #define GPIO_9  (9) //E 
+// #define GPIO_11 (11) 
+#define GPIO_0   (0) //D
+//----
+#define GPIO_5   (5) //E
+#define GPIO_6   (6) //F
+#define GPIO_13 (13) //G 
 
 //* buttom 
 #define GPIO_16 (16) //buttom
 
 #define NUM_GPIOS 10 
 static const int All_gpios[NUM_GPIOS] = {GPIO_14, GPIO_15, GPIO_18,
-    GPIO_17, GPIO_27, GPIO_22,GPIO_10,GPIO_9,GPIO_11,GPIO_0};
+    GPIO_17, GPIO_27, GPIO_22,GPIO_0,GPIO_5,GPIO_6,GPIO_13};
 //*---------LED----------------------------
 #define NUM_LEDS 3   
 static const int led_gpios[NUM_LEDS] = {GPIO_14, GPIO_15, GPIO_18};
 static char ledmap[4] = {0b000, 0b001, 0b010, 0b100};
 //*---------7seg-----------------------------
 #define NUM_7seg 7 
-static const int seg7_gpios[NUM_7seg] = {GPIO_17, GPIO_27, GPIO_22,GPIO_10,GPIO_9,GPIO_11,GPIO_0};
+static const int seg7_gpios[NUM_7seg] = {GPIO_17, GPIO_27, GPIO_22,GPIO_0,GPIO_5,GPIO_6,GPIO_13};
 static char Seg_7_map[17] ={ 
     //abcdefg 
     0b1111110,//0 
