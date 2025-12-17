@@ -47,6 +47,8 @@ int main() {
         if (i == selected_room && !dropdown) attroff(A_REVERSE);
         x += strlen(menus[i].room_id) + 4;
       }
+
+       mvprintw(ROW_OFFSET+10, 2, "[S] Status All    [Q] Quit");
       /* ===== draw dropdown ===== */
       if (dropdown) {
         int start_x = 2;
@@ -59,6 +61,39 @@ int main() {
         }
       }
       refresh();          ch = getch();
+      //*----status all-----
+      if (ch == 's' || ch == 'S') {
+        clear();
+        snprintf(command, sizeof(command), "status");
+        mvprintw(ROW_OFFSET+2, 2, "CMD: %s", command);
+        /* socket */
+        sock = socket(AF_INET, SOCK_STREAM, 0);
+        if (sock < 0) {mvprintw(ROW_OFFSET+4,2,"socket error");refresh(); getch(); continue;}
+        serv_addr.sin_family = AF_INET;
+        serv_addr.sin_port = htons(PORT);
+        inet_pton(AF_INET, SERVER_IP, &serv_addr.sin_addr);
+        if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+            mvprintw(ROW_OFFSET+4,2,"connect failed");
+            close(sock);
+            refresh(); getch();
+            continue;
+        }
+        send(sock, command, strlen(command), 0);
+        memset(buffer, 0, sizeof(buffer));
+        int n = read(sock, buffer, sizeof(buffer)-1);
+        if (n > 0) {
+            mvprintw(ROW_OFFSET+4, 2, "%s", buffer);
+        } else {
+            mvprintw(ROW_OFFSET+4, 2, "No response");
+        }
+    
+        close(sock);
+        mvprintw(LINES-2, 2, "Press any key to continue...");
+        refresh();
+        getch();
+        continue;   // ⭐ 非常重要：跳過下面 menu 邏輯
+    }
+    
       if (ch == 'q') break;
       if (!dropdown) {
         switch (ch) {
@@ -133,7 +168,7 @@ int main() {
           }
           close(sock);
           //*-----------------------------------------------
-          mvprintw(ROW_OFFSET+9, 2, "Press any key to continue...");
+          mvprintw(ROW_OFFSET+15, 2, "Press any key to continue...");
           refresh(); getch();
           dropdown = 0;
           break;
