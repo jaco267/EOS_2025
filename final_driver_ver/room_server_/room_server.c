@@ -152,6 +152,22 @@ void* client_handler(void* arg) {
             int res = reserve_room(room_id, user_id, name[0] ? name : NULL);
             if (res == 0) snprintf(response, sizeof(response), "OK Room %d reserved by %d. Check-in in %d seconds.", room_id, user_id, CHECKIN_TIMEOUT);
             else if (res == -3) snprintf(response, sizeof(response), "ERROR Room %d reservation failed. Daily limit reached.", room_id);
+             // [SUGGEST-FREE] 新增：有空房可選 → 不入 wait queue，回覆空房清單
+    else if (res == -11) {
+        char *hint = get_free_rooms_hint();   // 你要實作這個函式（malloc/strdup）
+        snprintf(response, sizeof(response),
+                 "BUSY Room %d is not available. %s\n"
+                 "Please reserve one of the free rooms above.",
+                 room_id, hint ? hint : "Free rooms: (unknown)");
+        free(hint);
+    }
+
+    // [SUGGEST-FREE] 新增：無空房，但也不是全部 IN_USE（有人 RESERVED 等 checkin）→ 不入 wait queue
+    else if (res == -12) {
+        snprintf(response, sizeof(response),
+                 "BUSY No FREE rooms now (some rooms are RESERVED / pending check-in).\n"
+                 "Try: status  (or wait for check-in timeout)");
+    }
             else if (res == -4) snprintf(response, sizeof(response), "WAIT Room %d busy. Added to wait queue.", room_id);
             else if (res == -5) snprintf(response, sizeof(response), "ERROR Room %d wait queue full.", room_id);
             else if (res == -6) snprintf(response, sizeof(response), "ERROR user %d already has an active room.", user_id);
