@@ -102,10 +102,10 @@ g f | a b                 GPIO  2   3  4    5v
 | f   b |             (a) GPIO 17---11 12---GPIO 18 (led3)
 |   G   |             (b) GPIO 27---13 14---gnd          
 | E   C |             (c) GPIO 22---15 16---gpio23      
-|   D . |                    3.3v   17 18---gpio24           
----------  (RFID?MOSI)    GPIO 10---19 20---gnd       
-| | | | |  (RFID?MISO)    GPIO  9---21 22---gpio25  (RFID-RST?紅)   
-e d | c Dp (RFID?SCK?)    GPIO 11---23 24---gpio8   (RFID-SDA,灰)       
+|   D . |      (RFID:咖啡)   3.3v ---17 18---gpio24           
+---------      (RFID?藍色)GPIO 10---19 20---gnd      (RFID-橘色)
+| | | | |      (RFID?綠)  GPIO  9---21 22---gpio25  (RFID-RST?紅)   
+e d | c Dp     (RFID?紫)  GPIO 11---23 24---gpio8   (RFID-SDA,灰)       
    gnd                        gnd   25 26---gpio7       
                       (d) GPIO  0---27 28---gpio1 
                       (e) GPIO  5---29 30---gnd 
