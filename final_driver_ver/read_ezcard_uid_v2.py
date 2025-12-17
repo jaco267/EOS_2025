@@ -19,7 +19,7 @@ def send_reserve(uid_hex):
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((SERVER_IP, SERVER_PORT))
-            cmd = f"reserve -1 {uid_hex}\n"
+            cmd = f"rfid_reserve 0 {uid_hex}\n"
             sock.sendall(cmd.encode())
             resp = sock.recv(1024).decode().strip()
             print(f"[server] {resp}")
