@@ -1,5 +1,5 @@
 #include "globe_var.h"
-int g_selected_room = -1;
+int g_selected_room = 0;
 
 // shared resources
 room_t rooms[MAX_ROOMS];

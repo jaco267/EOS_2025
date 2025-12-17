@@ -72,14 +72,17 @@ void* button_listener(void* arg){
         buf[n] = '\0';  // 確保字串結尾
         printf("reseive : %s\n", buf);
         if (strstr(buf, "BTN:1")) {
-            printf("todo: .... [SYSTEM] CHECK-IN g_selected_room .\n");
-            int res = check_in(g_selected_room, -1); // -1 表示自動 check-in
-            // 通知已註冊 client
+            printf("status +1 .\n");
+            // [AUTO-HW] 新增：status <room_id> 視為「選取房」並立即更新顯示    
+            pthread_mutex_lock(&room_mutex);
+            // if (g_selected_room < 0) g_selected_room = 0;
+            g_selected_room = (g_selected_room + 1)% MAX_ROOMS; 
+            update_display_selected_locked();
+            pthread_mutex_unlock(&room_mutex);
+        
+
             char msg[256];
-            if (res == 0)
-                snprintf(msg, sizeof(msg), "OK Room %d checked in (button).\n", g_selected_room);
-            else
-                snprintf(msg, sizeof(msg), "ERROR Room %d check-in failed (button).\n", g_selected_room);
+            snprintf(msg, sizeof(msg), "g_selected_room update to %d \n", g_selected_room);
             pthread_mutex_lock(&clients_mutex);
             for (int i = 0; i < MAX_USERS; i++) {
                 if (clients[i].sock > 0) {
