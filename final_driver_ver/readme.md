@@ -115,4 +115,12 @@ pin 腳                          RPi gpio pin
                              gnd    39 40---GPIO 21 
 ```
 
+```
+RFID-RC522  
+      SDA SCK MOSI MISO RQ GND RST 3x3
+      灰  紫   藍   綠   黃  橘  紅  咖啡
+GPIO  8   11  10   9    X      25      
+```
+
+
 - [button 接線](https://raspberrypihq.com/use-a-push-button-with-raspberry-pi-gpio/)
