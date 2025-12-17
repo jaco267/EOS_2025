@@ -136,7 +136,6 @@ void* client_handler(void* arg) {
     if (strcmp(cmd, "register") == 0) {
         int uid = -1, n = 0;
         char name[128] = {0};
-
         if (sscanf(buffer, "register %d %n", &uid, &n) >= 1) {
             if (n > 0 && buffer[n]) {
                 snprintf(name, sizeof(name), "%s", buffer + n);
