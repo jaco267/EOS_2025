@@ -43,12 +43,10 @@ int main() {
                     attron(A_REVERSE);
                 mvprintw(i + 1, start_x, "%s",
                          menus[selected_room].actions[i]);
-
                 if (i == selected_action)
                     attroff(A_REVERSE);
             }
         }
-
         refresh();          ch = getch();
         if (ch == 'q')
             break;
@@ -85,14 +83,6 @@ int main() {
                 dropdown = 0;
                 break;
             case '\n':
-                // mvprintw(10, 2, "You selected: %s -> %s",
-                //          menus[selected_room].room_id,
-                //          menus[selected_room].actions[selected_action]);
-                // dropdown = 0;
-                // getch();
-                // break;
-                // clear();
-
                 const char *room = menus[selected_room].room_id;
                 const char *action = menus[selected_room].actions[selected_action];
             
@@ -102,15 +92,11 @@ int main() {
                 /* 只有 reserve 才要求輸入 user id */
                 if (strcmp(action, "reserve") == 0) {
                     char user_id[32];
-            
                     mvprintw(ROW_OFFSET+5, 2, "Enter user id: ");
                     refresh();
-            
                     echo();
                     curs_set(1);
-            
                     mvgetnstr(ROW_OFFSET+5, 18, user_id, sizeof(user_id) - 1);
-            
                     noecho();
                     curs_set(0);
             
