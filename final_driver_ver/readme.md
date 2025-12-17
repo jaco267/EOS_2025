@@ -20,6 +20,8 @@ make
 # make LINUX_KERNEL_PATH=/home/ncrl/rpi-linux-6.1
 # make LINUX_KERNEL_PATH=/home/elton/Desktop/emb_linux/linux
 scp -r ../final_driver_ver   elton@192.168.222.222:~/Desktop
+# scp -r ../final_driver_ver user@192.168.222.222:~/Desktop/final_driver_ver/
+
 
 ssh elton@192.168.222.222
 pi$ cd ~/Desktop/final_driver_ver
