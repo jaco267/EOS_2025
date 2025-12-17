@@ -43,6 +43,30 @@ int update_display_selected_locked(void) {
     hw_update_selected_room_locked(g_selected_room);
     return 0;
 }
+
+// [SUGGEST-FREE] 新增：建立 FREE 房清單字串
+char* get_free_rooms_hint(void) {
+    pthread_mutex_lock(&room_mutex);
+
+    char buf[512];
+    int pos = 0;
+    pos += snprintf(buf + pos, sizeof(buf) - pos, "Free rooms: ");
+
+    int cnt = 0;
+    for (int i = 0; i < MAX_ROOMS; i++) {
+        if (rooms[i].status == FREE) {
+            pos += snprintf(buf + pos, sizeof(buf) - pos, "%d ", i);
+            cnt++;
+        }
+    }
+
+    if (cnt == 0) {
+        snprintf(buf, sizeof(buf), "Free rooms: (none)");
+    }
+
+    pthread_mutex_unlock(&room_mutex);
+    return strdup(buf);
+}
 char* get_all_status(int room_id) {
     pthread_mutex_lock(&room_mutex);
 
@@ -173,6 +197,30 @@ int reserve_room(int room_id, int user_id, const char* name) {
     }
 
     // room busy -> wait queue (avoid duplicates)
+
+    // [SUGGEST-FREE] 修改：房間忙時，先看有沒有 FREE 房；有就不入 wait queue，回報給使用者
+if (r->status != FREE) {
+    int free_cnt = 0;
+    int all_in_use = 1;
+
+    for (int k = 0; k < MAX_ROOMS; k++) {
+        if (rooms[k].status == FREE) free_cnt++;
+        if (rooms[k].status != IN_USE) all_in_use = 0;
+    }
+
+    // 有空房：不入隊，回傳特殊碼讓 server 回覆空房清單
+    if (free_cnt > 0) {
+        pthread_mutex_unlock(&room_mutex);
+        return -11; // [SUGGEST-FREE] 有空房可選
+    }
+
+    // 沒空房但也不是全部 IN_USE（例如有人 RESERVED 還沒 checkin）：依你的規則，不入隊
+    if (!all_in_use) {
+        pthread_mutex_unlock(&room_mutex);
+        return -12; // [SUGGEST-FREE] 無空房、且非全部 IN_USE → 不入 wait queue
+    }
+
+    // 只有「全部 IN_USE」才允許進入 wait queue
     if (wait_contains(&r->wait_q, user_id)) {
         pthread_mutex_unlock(&room_mutex);
         return -7;
@@ -183,7 +231,8 @@ int reserve_room(int room_id, int user_id, const char* name) {
         printf("[SERVER LOG] Room %d busy. User %d added to wait queue.\n", room_id, user_id);
         return -4;
     }
-
+}
+    
     pthread_mutex_unlock(&room_mutex);
     return -5;
 }

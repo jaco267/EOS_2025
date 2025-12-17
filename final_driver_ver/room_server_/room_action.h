@@ -15,6 +15,8 @@ const char* get_status_str(room_status_t status);
  * Caller must free returned buffer.
  */
 char* get_all_status(int room_id);
+// [SUGGEST-FREE] 新增：回傳目前 FREE 房清單字串（malloc，caller free）
+char* get_free_rooms_hint(void);
 // ------ operations (reserve/checkin/release/extend) ------
 
 int reserve_room(int room_id, int user_id, const char* name);
