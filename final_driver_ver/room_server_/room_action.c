@@ -16,27 +16,21 @@ const char* get_status_str(room_status_t status) {
         default: return "UNKNOWN";
     }
 }
-
 static void hw_update_selected_room_locked(int room_id) {
     // caller already holds room_mutex
     int fd = open(DEVICE_FILE, O_WRONLY);
     if (fd < 0) return;
-
-    // [AUTO-HW] 修改：7seg 改顯示「房號」(00~11)，不再顯示 user_id 末兩碼
+    // 顯示「房號」(0,1,2)
 	char cmd[64];
 	snprintf(cmd, sizeof(cmd), "7seg %d", rooms[room_id].id);  // 或直接用 room_id
 	(void)write(fd, cmd, strlen(cmd));
-
-
     // LED: show room status (FREE=1, RESERVED=2, IN_USE=3)
     int led_id = (int)rooms[room_id].status + 1;
     snprintf(cmd, sizeof(cmd), "led %d", led_id);
     (void)write(fd, cmd, strlen(cmd));
-
     close(fd);
 }
-// [AUTO-HW] 新增：統一入口，更新「目前選取房間 g_selected_room」的 LED/7seg
-// caller 必須已經持有 room_mutex
+// 更新「目前選取房間 g_selected_room」的 LED/7seg, caller 必須已經持有 room_mutex
 int update_display_selected_locked(void) {
     // caller holds room_mutex
     if (g_selected_room < 0 || g_selected_room >= MAX_ROOMS) return -1;
@@ -44,14 +38,12 @@ int update_display_selected_locked(void) {
     return 0;
 }
 
-// [SUGGEST-FREE] 新增：建立 FREE 房清單字串
+// 建立 FREE 房清單字串
 char* get_free_rooms_hint(void) {
     pthread_mutex_lock(&room_mutex);
-
     char buf[512];
     int pos = 0;
     pos += snprintf(buf + pos, sizeof(buf) - pos, "Free rooms: ");
-
     int cnt = 0;
     for (int i = 0; i < MAX_ROOMS; i++) {
         if (rooms[i].status == FREE) {
@@ -59,11 +51,9 @@ char* get_free_rooms_hint(void) {
             cnt++;
         }
     }
-
     if (cnt == 0) {
         snprintf(buf, sizeof(buf), "Free rooms: (none)");
     }
-
     pthread_mutex_unlock(&room_mutex);
     return strdup(buf);
 }
@@ -125,13 +115,8 @@ char* get_all_status(int room_id) {
     }
 
     strncat(resp, "-------------------\n", required_size - strlen(resp) - 1);
-    // [AUTO-HW] 修改：不在 status() 裡直接更新硬體
+    //  不在 status() 裡直接更新硬體
     // 硬體更新改由「狀態變更事件」(reserve/checkin/release/timeout/promote) 自動觸發
-    // only when selecting a room, update HW to avoid pin shortage
-    //if (room_id != -1 && room_id >= 0 && room_id < MAX_ROOMS) {
-    //    hw_update_selected_room_locked(room_id);
-    //}
-
     pthread_mutex_unlock(&room_mutex);
     return resp;
 }
@@ -147,29 +132,23 @@ char* get_all_status(int room_id) {
 int reserve_room(int room_id, int user_id, const char* name) {
     if (room_id < 0 || room_id >= MAX_ROOMS) return -2;
     if (user_id <= 0) return -9;
-
     pthread_mutex_lock(&room_mutex);
-
     // auto register/update name if provided
     if (name && name[0]) {
         (void)user_register_locked(user_id, name);
     }
-
     // must be registered
     if (!user_get_locked(user_id)) {
         pthread_mutex_unlock(&room_mutex);
         return -10; // not registered
     }
-
     // one user can hold only one active room at a time
     if (!user_can_reserve_locked(user_id)) {
         pthread_mutex_unlock(&room_mutex);
         return -6;
     }
-
     room_t *r = &rooms[room_id];
-
-    if (r->reserve_count_today >= 2) {
+    if (r->reserve_count_today >= MAX_RESERVE_COUNT_DAILY) {
         pthread_mutex_unlock(&room_mutex);
         return -3;
     }
@@ -303,7 +282,7 @@ int release_room(int room_id, int user_id) {
     int next_user;
     if (wait_dequeue(&r->wait_q, &next_user) == 0) {
         // assign to next waiting user (also obey daily limit)
-        if (r->reserve_count_today < 2 && user_can_reserve_locked(next_user)) {
+        if (r->reserve_count_today < MAX_RESERVE_COUNT_DAILY && user_can_reserve_locked(next_user)) {
             r->status = RESERVED;
             r->reserve_tick = get_current_tick_snapshot();
             r->extend_used = 0;
