@@ -186,3 +186,4 @@ finally:
     rdr.cleanup()
 
 7.sudo python3 read_ezcard_uid.py 
+## -------------
