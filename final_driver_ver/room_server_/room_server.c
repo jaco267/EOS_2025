@@ -63,7 +63,6 @@ void remove_client(int sock) {
 // 你應該會在某個 .c 定義它（例如 globe_var.c）
 extern int g_selected_room;
 void* button_listener(void* arg){
-
     while (1) {
         int fd = open("/dev/etx_device", O_RDONLY);
         if (fd < 0) {   perror("open /dev/etx_device failed");return NULL;}
@@ -71,30 +70,26 @@ void* button_listener(void* arg){
         ssize_t n = read(fd, buf, sizeof(buf)-1);
         if (n <= 0){close(fd); continue;}
         buf[n] = '\0';  // 確保字串結尾
-
         printf("reseive : %s\n", buf);
         if (strstr(buf, "BTN:1")) {
-            
             printf("todo: .... [SYSTEM] CHECK-IN g_selected_room .\n");
-            // pthread_mutex_lock(&room_mutex);
-            // int res = check_in(g_selected_room, -1); // -1 表示自動 check-in
-            // pthread_mutex_unlock(&room_mutex);
-            // // 通知已註冊 client
-            // char msg[256];
-            // if (res == 0)
-            //     snprintf(msg, sizeof(msg), "OK Room %d checked in (button).\n", g_selected_room);
-            // else
-            //     snprintf(msg, sizeof(msg), "ERROR Room %d check-in failed (button).\n", g_selected_room);
-            // pthread_mutex_lock(&clients_mutex);
-            // for (int i = 0; i < MAX_USERS; i++) {
-            //     if (clients[i].sock > 0) {
-            //         send(clients[i].sock, msg, strlen(msg), 0);
-            //     }
-            // }
-            // pthread_mutex_unlock(&clients_mutex);
+            int res = check_in(g_selected_room, -1); // -1 表示自動 check-in
+            // 通知已註冊 client
+            char msg[256];
+            if (res == 0)
+                snprintf(msg, sizeof(msg), "OK Room %d checked in (button).\n", g_selected_room);
+            else
+                snprintf(msg, sizeof(msg), "ERROR Room %d check-in failed (button).\n", g_selected_room);
+            pthread_mutex_lock(&clients_mutex);
+            for (int i = 0; i < MAX_USERS; i++) {
+                if (clients[i].sock > 0) {
+                    send(clients[i].sock, msg, strlen(msg), 0);
+                }
+            }
+            pthread_mutex_unlock(&clients_mutex);
         }
         close(fd);
-        // usleep(100000); // 避免 busy loop，100ms
+        usleep(100000); // 避免 busy loop，100ms
     }
 
    
