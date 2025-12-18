@@ -2,7 +2,7 @@
 #include "room_timer.h"
 #include "user_db.h"
 #include "wait_queue.h"
-
+#include "shm_state.h"
 void tick_handler(int sig) {
     (void)sig;
     g_tick++;
@@ -23,6 +23,7 @@ void* timer_worker(void* arg) {
     pthread_mutex_lock(&room_mutex);
     // [AUTO-HW] 新增：只要選取房間的狀態有變更，最後統一更新一次硬體
     int hw_dirty = 0;
+    int shm_dirty = 0;
     // reset daily counters (sim day)
     time_t now_sec = time(NULL);
     long today = now_sec / SIM_DAY_SECONDS;
@@ -109,7 +110,10 @@ void* timer_worker(void* arg) {
         }
     }
     // [AUTO-HW] 新增：只在需要時更新一次（避免每個 room timeout 都寫硬體）
-    if (hw_dirty) update_display_selected_locked();
+    //if (hw_dirty) update_display_selected_locked();
+    if (shm_dirty) shm_publish_locked(); 
+   // if (hw_dirty) update_display_selected_locked();
+    shm_publish_locked();
     pthread_mutex_unlock(&room_mutex);
     struct timespec req = {0, 10 * 1000 * 1000};
     nanosleep(&req, NULL);

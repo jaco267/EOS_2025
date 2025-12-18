@@ -7,7 +7,7 @@
 
 #include "wait_queue.h"
 #include "user_db.h"
-
+#include "shm_state.h"
 const char* get_status_str(room_status_t status) {
     switch(status) {
         // case FREE: return "FREE (🟢)";
@@ -169,6 +169,7 @@ int reserve_room(int room_id, int user_id, const char* name) {
         // [AUTO-HW] 修改：reserve 成功後，直接把顯示切到這間房
         g_selected_room = room_id;
         //update_display_selected_locked();
+         shm_publish_locked();
         pthread_mutex_unlock(&room_mutex);
         printf("[SERVER LOG] Room %d reserved by user %d.\n", room_id, user_id);
         return 0;
@@ -246,7 +247,7 @@ int check_in(int room_id, int user_id) {
     // [AUTO-HW] 修改：checkin 成功後，直接把顯示切到這間房
     g_selected_room = room_id;
     //update_display_selected_locked();
-
+     shm_publish_locked();
     pthread_mutex_unlock(&room_mutex);
     printf("[SERVER LOG] Room %d checked in.\n", room_id);
     return 0;
@@ -306,7 +307,7 @@ int release_room(int room_id, int user_id) {
     // [AUTO-HW] 修改：release/遞補完成後，直接把顯示切到這間房
     g_selected_room = room_id;
     //update_display_selected_locked();
-
+ shm_publish_locked();
     pthread_mutex_unlock(&room_mutex);
     return 0;
 }
@@ -329,6 +330,7 @@ int extend_room(int room_id, int user_id) {
 
     r->extend_used = 1;
     r->warn_5s_sent = 0; // [AUTO-WARN] 新增：延長後，允許在最終 5 秒再提醒一次
+    shm_publish_locked(); 
     pthread_mutex_unlock(&room_mutex);
 
     printf("[SERVER LOG] Room %d extended.\n", room_id);

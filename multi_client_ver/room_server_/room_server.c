@@ -22,7 +22,7 @@
 #include "room_action.h"
 #include "room_timer.h"
 #include "user_db.h"
-
+#include "shm_state.h"
 typedef struct {
     int sock;
     int user_id;
@@ -218,6 +218,7 @@ void* client_handler(void* arg) {
         if (rid >= 0 && rid < MAX_ROOMS) {
             pthread_mutex_lock(&room_mutex);
             g_selected_room = rid;
+            shm_publish_locked();
             update_display_selected_locked();
             pthread_mutex_unlock(&room_mutex);
         }
@@ -229,7 +230,8 @@ void* client_handler(void* arg) {
         } else {
             pthread_mutex_lock(&room_mutex);
             g_selected_room = room_id;
-            update_display_selected_locked();
+            //update_display_selected_locked();
+              shm_publish_locked();  
             pthread_mutex_unlock(&room_mutex);
             snprintf(response, sizeof(response), "OK selected room %d.", room_id);
         }
@@ -337,6 +339,14 @@ int main() {
     // init simulated "day"
     time_t now = time(NULL);
     g_last_reset_day = now / SIM_DAY_SECONDS;
+ // ---- SHM init (shared state) ----
+    if (shm_init_server() != 0) {
+        perror("shm_init_server");
+    }
+    // publish initial snapshot
+    pthread_mutex_lock(&room_mutex);
+    shm_publish_locked();
+    pthread_mutex_unlock(&room_mutex);
 
     // setup SIGALRM handler for tick
     struct sigaction sa;
