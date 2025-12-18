@@ -16,7 +16,7 @@
 #define DEVICE_FILE "/dev/etx_device"
 
 // client 端用來輪詢切換房號（可先寫死 12；若不一致，下面會自動從 server 回覆修正）
-#define DEFAULT_MAX_ROOMS 12
+#define DEFAULT_MAX_ROOMS 3
 
 static pthread_mutex_t net_mutex = PTHREAD_MUTEX_INITIALIZER;
 static int g_selected_room = 0;
