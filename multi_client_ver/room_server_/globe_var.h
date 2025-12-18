@@ -1,0 +1,58 @@
+#if !defined(GLOBEVAR)
+#define GLOBEVAR
+#include <stdint.h>
+#include <pthread.h>
+#include <signal.h>
+#include "wait_queue.h"
+
+// system config
+#define MAX_ROOMS 3
+#define PORT 8080
+#define MAX_RESERVE_COUNT_DAILY 5  
+#define DEVICE_FILE "/dev/etx_device"
+#define MAX_NAME_LEN 30 
+// durations are still specified in seconds for easy reading.
+// We'll convert to ticks using TICK_MS.
+#define SLOT_DURATION 60        // seconds (one slot)
+#define CHECKIN_TIMEOUT 10       // seconds to check-in after reservation
+
+#define TICK_MS 100             // tick granularity (milliseconds)
+#define TICKS_PER_SEC (1000 / TICK_MS)
+
+// [AUTO-WARN] 新增：剩餘 5 秒提醒用
+#define WARN_REMAIN_SEC 5
+#define WARN_TICKS (WARN_REMAIN_SEC * TICKS_PER_SEC)
+
+// Derived tick counts
+#define SLOT_TICKS (SLOT_DURATION * TICKS_PER_SEC)
+#define CHECKIN_TICKS (CHECKIN_TIMEOUT * TICKS_PER_SEC)
+typedef enum { FREE, RESERVED, IN_USE } room_status_t;
+
+//* 新增欄位後請記得去room_server.c main() 修改 initialize room
+typedef struct {
+    int id;
+    room_status_t status;
+    uint64_t reserve_tick;   // tick when reserved / checked-in
+    int extend_used;         // 0: not extended, 1: extended
+    int user_id;             //* 輸入學號  
+    int reserve_count_today; //* 單日預約過幾次   超過兩次會鎖住   
+    wait_queue_t wait_q;     // 候補隊列 <id1,id2,id3,...>
+
+     int warn_5s_sent; // [AUTO-WARN] 新增：最後 5 秒提醒
+} room_t;
+
+// shared resources
+extern int g_selected_room;   // -1: none, else room_id
+extern room_t rooms[MAX_ROOMS];
+extern pthread_mutex_t room_mutex;
+#define SIM_DAY_SECONDS 180    // 模擬：1 天 = 180 秒
+// 新增：記錄上次重設是在第幾天（UNIX epoch / 一天的 index）
+extern time_t g_last_reset_day;
+
+// global tick counter (tick increments in signal handler)
+// use sig_atomic_t for signal-safety; worker will read into a wider type
+//* dont put static in header file
+extern volatile sig_atomic_t g_tick;
+
+#endif // GLOBEVAR
+
