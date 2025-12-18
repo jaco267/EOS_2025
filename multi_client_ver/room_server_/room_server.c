@@ -62,48 +62,64 @@ void remove_client(int sock) {
 
 // 你應該會在某個 .c 定義它（例如 globe_var.c）
 extern int g_selected_room;
-void* button_listener(void* arg){
-    while (1) {
-        int fd = open("/dev/etx_device", O_RDONLY);
-        if (fd < 0) {   perror("open /dev/etx_device failed");return NULL;}
-        char buf[128];
-        ssize_t n = read(fd, buf, sizeof(buf)-1);
-        if (n <= 0){close(fd); continue;}
-        buf[n] = '\0';  // 確保字串結尾
-        printf("reseive : %s\n", buf);
-        if (strstr(buf, "BTN:1")) {
-            printf("status +1 .\n");
+//void* button_listener(void* arg){
+   // while (1) {
+      //  int fd = open("/dev/etx_device", O_RDONLY);
+       // if (fd < 0) {   perror("open /dev/etx_device failed");return NULL;}
+       // char buf[128];
+       // ssize_t n = read(fd, buf, sizeof(buf)-1);
+        //if (n <= 0){close(fd); continue;}
+        //buf[n] = '\0';  // 確保字串結尾
+       // printf("reseive : %s\n", buf);
+        //if (strstr(buf, "BTN:1")) {
+         //   printf("status +1 .\n");
             // [AUTO-HW] 新增：status <room_id> 視為「選取房」並立即更新顯示    
-            pthread_mutex_lock(&room_mutex);
+           // pthread_mutex_lock(&room_mutex);
             // if (g_selected_room < 0) g_selected_room = 0;
-            g_selected_room = (g_selected_room + 1)% MAX_ROOMS; 
-            update_display_selected_locked();
-            pthread_mutex_unlock(&room_mutex);
+            //g_selected_room = (g_selected_room + 1)% MAX_ROOMS; 
+            //update_display_selected_locked();
+          //  pthread_mutex_unlock(&room_mutex);
         
 
-            char msg[256];
-            snprintf(msg, sizeof(msg), "g_selected_room update to %d \n", g_selected_room);
-            pthread_mutex_lock(&clients_mutex);
-            for (int i = 0; i < MAX_USERS; i++) {
-                if (clients[i].sock > 0) {
-                    send(clients[i].sock, msg, strlen(msg), 0);
-                }
-            }
-            pthread_mutex_unlock(&clients_mutex);
-        }
-        close(fd);
-        usleep(100000); // 避免 busy loop，100ms
-    }
+           // char msg[256];
+           // snprintf(msg, sizeof(msg), "g_selected_room update to %d \n", g_selected_room);
+           // pthread_mutex_lock(&clients_mutex);
+           // for (int i = 0; i < MAX_USERS; i++) {
+           //     if (clients[i].sock > 0) {
+           //         send(clients[i].sock, msg, strlen(msg), 0);
+            //    }
+            //}
+           // pthread_mutex_unlock(&clients_mutex);
+        //}
+       // close(fd);
+       // usleep(100000); // 避免 busy loop，100ms
+   // }
 
    
-    return NULL;
-}
+    //return NULL;
+//}
 // --------- helpers ---------
 
 static void send_text(int sock, const char *msg) {
     if (!msg) msg = "ERROR internal\n";
     send(sock, msg, strlen(msg), 0);
 }
+
+// [CLIENT-HW] 新增：回覆中附帶一行機器可讀的 HW 狀態，讓 client 更新本機 I/O
+static void append_hw_line(char *out, size_t n, int room_id) {
+    if (room_id < 0 || room_id >= MAX_ROOMS) return;
+
+    pthread_mutex_lock(&room_mutex);
+    int st  = (int)rooms[room_id].status;   // FREE=0, RESERVED=1, IN_USE=2
+    int uid = rooms[room_id].user_id;
+    pthread_mutex_unlock(&room_mutex);
+
+    size_t len = strlen(out);
+    if (len >= n) return;
+    snprintf(out + len, n - len, "\nHW room=%d status=%d user=%d\n", room_id, st, uid);
+}
+
+
 
 static void usage(char *out, size_t n) {
     snprintf(out, n,
@@ -193,6 +209,11 @@ void* client_handler(void* arg) {
         snprintf(response, sizeof(response), "OK\n%s", s);
         free(s);
 
+        // [CLIENT-HW] 新增：只有 status <room_id> 才附帶 HW 行
+    if (tok_room && rid >= 0 && rid < MAX_ROOMS) {
+    append_hw_line(response, sizeof(response), rid);
+    }
+
         // [AUTO-HW] 新增：status <room_id> 視為「選取房」並立即更新顯示
         if (rid >= 0 && rid < MAX_ROOMS) {
             pthread_mutex_lock(&room_mutex);
@@ -245,6 +266,9 @@ void* client_handler(void* arg) {
             else if (res == -7) snprintf(response, sizeof(response), "ERROR user %d already in wait queue for room %d.", user_id, room_id);
             else if (res == -10) snprintf(response, sizeof(response), "ERROR user %d not registered. Use: register <user_id> <name> OR reserve ... <name>", user_id);
             else snprintf(response, sizeof(response), "ERROR reserve failed (%d).", res);
+            // [CLIENT-HW] 新增
+            append_hw_line(response, sizeof(response), room_id);
+
         }
 
     } else if (strcmp(cmd, "checkin") == 0) {
@@ -252,18 +276,26 @@ void* client_handler(void* arg) {
         if (res == 0) snprintf(response, sizeof(response), "OK Room %d checked in. Session duration: %d seconds.", room_id, SLOT_DURATION);
         else if (res == -8) snprintf(response, sizeof(response), "ERROR checkin denied: not the room owner.");
         else snprintf(response, sizeof(response), "ERROR Room %d check-in failed.", room_id);
+        // [CLIENT-HW] 新增
+    append_hw_line(response, sizeof(response), room_id);
+
 
     } else if (strcmp(cmd, "release") == 0) {
         int res = release_room(room_id, user_id);
         if (res == 0) snprintf(response, sizeof(response), "OK Room %d released.", room_id);
         else if (res == -8) snprintf(response, sizeof(response), "ERROR release denied: not the room owner.");
         else snprintf(response, sizeof(response), "ERROR Room %d release failed.", room_id);
+        // [CLIENT-HW] 新增
+        append_hw_line(response, sizeof(response), room_id);
+
 
     } else if (strcmp(cmd, "extend") == 0) {
         int res = extend_room(room_id, user_id);
         if (res == 0) snprintf(response, sizeof(response), "OK Room %d extended by %d seconds.", room_id, SLOT_DURATION);
         else if (res == -8) snprintf(response, sizeof(response), "ERROR extend denied: not the room owner.");
         else snprintf(response, sizeof(response), "ERROR Room %d extension failed.", room_id);
+        // [CLIENT-HW] 新增
+    append_hw_line(response, sizeof(response), room_id);
 
     } else {
         snprintf(response, sizeof(response), "ERROR Unknown command: %s", cmd);
@@ -331,15 +363,15 @@ int main() {
     pthread_t tid_timer;
     if (pthread_create(&tid_timer, NULL, timer_worker, NULL) != 0) {
         perror("pthread_create timer_worker");
-        return 1;
+       return 1;
     }
-    pthread_detach(tid_timer);
-    pthread_t tid_btn;
-    if (pthread_create(&tid_btn, NULL, button_listener, NULL) != 0) {
-        perror("pthread_create button_listener");
-        return 1;
-    }
-    pthread_detach(tid_btn); // 不想 join，讓它自己跑
+    //pthread_detach(tid_timer);
+    //pthread_t tid_btn;
+    //if (pthread_create(&tid_btn, NULL, button_listener, NULL) != 0) {
+      // perror("pthread_create button_listener");
+        //return 1;
+    //}
+    //pthread_detach(tid_btn); // 不想 join，讓它自己跑
     //* start button listener thread 
 
     // setup network server

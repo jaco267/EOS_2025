@@ -19,25 +19,24 @@ const char* get_status_str(room_status_t status) {
         default: return "UNKNOWN";
     }
 }
-static void hw_update_selected_room_locked(int room_id) {
+//static void hw_update_selected_room_locked(int room_id) {
     // caller already holds room_mutex
-    int fd = open(DEVICE_FILE, O_WRONLY);
-    if (fd < 0) return;
+    //int fd = open(DEVICE_FILE, O_WRONLY);
+    //if (fd < 0) return;
     // 顯示「房號」(0,1,2)
-	char cmd[64];
-	snprintf(cmd, sizeof(cmd), "7seg %d", rooms[room_id].id);  // 或直接用 room_id
-	(void)write(fd, cmd, strlen(cmd));
-    // LED: show room status (FREE=1, RESERVED=2, IN_USE=3)
-    int led_id = (int)rooms[room_id].status + 1;
-    snprintf(cmd, sizeof(cmd), "led %d", led_id);
-    (void)write(fd, cmd, strlen(cmd));
-    close(fd);
-}
+	//char cmd[64];
+	//snprintf(cmd, sizeof(cmd), "7seg %d", rooms[room_id].id);  // 或直接用 room_id
+	//(void)write(fd, cmd, strlen(cmd));
+    //// LED: show room status (FREE=1, RESERVED=2, IN_USE=3)
+    //int led_id = (int)rooms[room_id].status + 1;
+    //(void)write(fd, cmd, strlen(cmd));
+   // close(fd);
+//}
 // 更新「目前選取房間 g_selected_room」的 LED/7seg, caller 必須已經持有 room_mutex
 int update_display_selected_locked(void) {
     // caller holds room_mutex
-    if (g_selected_room < 0 || g_selected_room >= MAX_ROOMS) return -1;
-    hw_update_selected_room_locked(g_selected_room);
+    //if (g_selected_room < 0 || g_selected_room >= MAX_ROOMS) return -1;
+    //hw_update_selected_room_locked(g_selected_room);
     return 0;
 }
 
@@ -169,7 +168,7 @@ int reserve_room(int room_id, int user_id, const char* name) {
         //if (room_id == g_selected_room) update_display_selected_locked();
         // [AUTO-HW] 修改：reserve 成功後，直接把顯示切到這間房
         g_selected_room = room_id;
-        update_display_selected_locked();
+        //update_display_selected_locked();
         pthread_mutex_unlock(&room_mutex);
         printf("[SERVER LOG] Room %d reserved by user %d.\n", room_id, user_id);
         return 0;
@@ -246,7 +245,7 @@ int check_in(int room_id, int user_id) {
     //if (room_id == g_selected_room) update_display_selected_locked();
     // [AUTO-HW] 修改：checkin 成功後，直接把顯示切到這間房
     g_selected_room = room_id;
-    update_display_selected_locked();
+    //update_display_selected_locked();
 
     pthread_mutex_unlock(&room_mutex);
     printf("[SERVER LOG] Room %d checked in.\n", room_id);
@@ -306,7 +305,7 @@ int release_room(int room_id, int user_id) {
     //if (room_id == g_selected_room) update_display_selected_locked();
     // [AUTO-HW] 修改：release/遞補完成後，直接把顯示切到這間房
     g_selected_room = room_id;
-    update_display_selected_locked();
+    //update_display_selected_locked();
 
     pthread_mutex_unlock(&room_mutex);
     return 0;

@@ -1,7 +1,7 @@
 obj-m += room_driver.o
 
 # ===== Kernel module build (for Raspberry Pi / cross-compile) =====
-LINUX_KERNEL_PATH ?= /home/ncrl/rpi-linux-6.1
+LINUX_KERNEL_PATH ?= LINUX_KERNEL_PATH=/home/stu/linux
 
 ARCH ?= arm64
 CROSS_COMPILE ?= aarch64-linux-gnu-
