@@ -7,6 +7,11 @@
 #include <ncurses.h>
 #include <string.h>
 
+#include "room_server_/shm_state.h"
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #define SERVER_IP "127.0.0.1"
 #define PORT 8080
 #define BUFFER_SIZE 2048
@@ -35,6 +40,13 @@ int main() {
     int ch;
     int selected_room = 0;   int selected_action = 0;
     int dropdown = 0;
+    int shm_fd = shm_open(SHM_NAME, O_RDONLY, 0666);
+    shm_state_t *shm = NULL;
+    if (shm_fd >= 0) {
+        shm = (shm_state_t*)mmap(NULL, SHM_SIZE, PROT_READ, MAP_SHARED, shm_fd, 0);
+        // 不做嚴格檢查也可；要更嚴格就檢查 magic/version
+    }
+
     initscr(); noecho(); cbreak(); keypad(stdscr, TRUE);
     curs_set(0);
     while (1) {
@@ -61,6 +73,23 @@ int main() {
         }
       }
       refresh();          ch = getch();
+      
+      if (shm && shm != MAP_FAILED) {
+        mvprintw(ROW_OFFSET+12, 2, "[SHM] seq=%llu selected=%d",
+                 (unsigned long long)shm->seq, shm->selected_room);
+
+        for (int i = 0; i < MAX_ROOMS; i++) {
+          const char *st = (shm->rooms[i].status == 0) ? "FREE" :
+                           (shm->rooms[i].status == 1) ? "RESERVED" : "IN_USE";
+          mvprintw(ROW_OFFSET+13+i, 2,
+                   "Room%d %-8s uid=%d remain=%ds wait=%d",
+                   i, st, shm->rooms[i].user_id,
+                   shm->rooms[i].remain_sec,
+                   shm->rooms[i].wait_count);
+        }
+      } else {
+        mvprintw(ROW_OFFSET+12, 2, "[SHM] not connected");
+      }      
       //*----status all-----
       if (ch == 's' || ch == 'S') {
         clear();

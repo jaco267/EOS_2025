@@ -18,17 +18,18 @@ SRC_server = room_server_/room_server.c  \
              room_server_/globe_var.c    \
              room_server_/room_timer.c   \
              room_server_/wait_queue.c   \
-             room_server_/user_db.c
+             room_server_/user_db.c      \
+             room_server_/shm_state.c
 
 .PHONY: all user clean
 
 all:
 	$(MAKE) -C $(LINUX_KERNEL_PATH) M=$(PWD) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) modules
 
-user: room_client test_driver room_server
+user: room_client test_driver room_server hw_client
 
 room_server: $(SRC_server)
-	$(USER_CC) $(CFLAGS) -o $@ $^
+	$(USER_CC) $(CFLAGS) -o $@ $^ -lrt
 
 test_driver: $(SRC_test)
 	$(USER_CC) $(CFLAGS) -o $@ $^
@@ -37,7 +38,10 @@ room_client: $(SRC_client)
 	$(USER_CC) $(CFLAGS) -o $@ $^
 
 ncurse: ncurse.c  
-	$(USER_CC) $(CFLAGS) -o $@ $^ -lncurses
+	$(USER_CC) $(CFLAGS) -o $@ $^ -lncurses -lrt
+
+hw_client: hw_client.c
+	$(USER_CC) $(CFLAGS) -o $@ $^ -lrt
 
 clean:
 	$(MAKE) -C $(LINUX_KERNEL_PATH) M=$(PWD) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) clean
