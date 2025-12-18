@@ -12,6 +12,9 @@ reserve <room_id> <user_id>
 ```sh
 # export LINUX_KERNEL_PATH=/home/elton/Desktop/emb_linux/linux
 make clean
+#* sudo apt install libncurses-dev
+#* make ncurse
+#* ./ncurse
 # make clean LINUX_KERNEL_PATH=/home/stu/linux
 # make clean LINUX_KERNEL_PATH=/home/ncrl/rpi-linux-6.1
 # make clean LINUX_KERNEL_PATH=/home/elton/Desktop/emb_linux/linux

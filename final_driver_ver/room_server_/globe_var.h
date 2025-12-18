@@ -6,16 +6,14 @@
 #include "wait_queue.h"
 
 // system config
-#define MAX_ROOMS 5
+#define MAX_ROOMS 3
 #define PORT 8080
-
-
-
+#define MAX_RESERVE_COUNT_DAILY 5  
 #define DEVICE_FILE "/dev/etx_device"
 #define MAX_NAME_LEN 30 
 // durations are still specified in seconds for easy reading.
 // We'll convert to ticks using TICK_MS.
-#define SLOT_DURATION 30        // seconds (one slot)
+#define SLOT_DURATION 60        // seconds (one slot)
 #define CHECKIN_TIMEOUT 10       // seconds to check-in after reservation
 
 #define TICK_MS 100             // tick granularity (milliseconds)

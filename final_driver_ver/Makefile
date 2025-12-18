@@ -36,7 +36,10 @@ test_driver: $(SRC_test)
 room_client: $(SRC_client)
 	$(USER_CC) $(CFLAGS) -o $@ $^
 
+ncurse: ncurse.c  
+	$(USER_CC) $(CFLAGS) -o $@ $^ -lncurses
+
 clean:
 	$(MAKE) -C $(LINUX_KERNEL_PATH) M=$(PWD) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) clean
-	rm -f room_client room_server test_driver
+	rm -f room_client room_server test_driver ncurse
 

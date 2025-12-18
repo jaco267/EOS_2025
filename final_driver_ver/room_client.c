@@ -38,45 +38,27 @@ int main() {
     struct sockaddr_in serv_addr;
     char buffer[BUFFER_SIZE];
     char command[256];
-
     print_help();
-
     while (1) {
         printf("\nEnter command: ");
         if (!fgets(command, sizeof(command), stdin)) break;
         command[strcspn(command, "\n")] = 0;
-
-        if (strcasecmp(command, "exit") == 0) {
-            printf("Exiting client.\n");
-            break;
-        }
-        if (strcasecmp(command, "help") == 0) {
-            print_help();
-            continue;
-        }
+        if (strcasecmp(command, "exit") == 0) {printf("Exiting client.\n");break;}
+        if (strcasecmp(command, "help") == 0) {print_help();continue;}
         if (command[0] == '\0') continue;
-
+        //*-------socket-----------------
         sock = socket(AF_INET, SOCK_STREAM, 0);
         if (sock < 0) { perror("socket"); continue; }
-
         serv_addr.sin_family = AF_INET;
         serv_addr.sin_port = htons(PORT);
-
         if (inet_pton(AF_INET, SERVER_IP, &serv_addr.sin_addr) <= 0) {
-            printf("Invalid address\n");
-            close(sock);
-            continue;
+            printf("Invalid address\n");close(sock);continue;
         }
-
         if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-            perror("connect");
-            close(sock);
-            sleep(1);
-            continue;
+            perror("connect");close(sock);sleep(1);continue;
         }
-
         send(sock, command, strlen(command), 0);
-
+        //*--------socket receive------------------
         memset(buffer, 0, sizeof(buffer));
         int n = read(sock, buffer, sizeof(buffer) - 1);
         if (n > 0) {
