@@ -35,6 +35,8 @@ pi$ dmesg |tail -n 10
 
 #### user space program   
 pi$ make user
+pi$ make ncurse 
+pi$ make test_client
 pi$ sudo su 
 pi$ ./test_driver    
 # turn off led 

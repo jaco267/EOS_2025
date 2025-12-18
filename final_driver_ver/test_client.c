@@ -48,10 +48,25 @@ static void send_command(const char *cmd){
     close(sock);
 }
 int main() {
-    send_command("reserve 0 312513129 Tom");
+    send_command("reserve 0 777 Tom");
+    sleep(1);
+    send_command("reserve 1 888 Alice");
+    sleep(1);
+    send_command("reserve 2 999 Bob");
     sleep(1);
     send_command("checkin 0");
+    sleep(1);
+    send_command("checkin 1");
+    sleep(1);
+    send_command("checkin 2");
+    sleep(1);
 
+    send_command("extend 0");
+    sleep(1);
+    send_command("extend 1");
+    sleep(1);
+    send_command("extend 2");
+    sleep(1);
     /* step 3: status 0 */
     send_command("status 0");
 

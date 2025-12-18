@@ -273,7 +273,9 @@ static int __init etx_driver_init(void){
   init_waitqueue_head(&btn_wq);
   btn_irq = gpio_to_irq(GPIO_16);
   if (btn_irq < 0) {pr_err("Failed to get IRQ for GPIO_16\n");goto r_gpio;}
-  if (request_irq(btn_irq, button_isr, IRQF_TRIGGER_RISING, "gpio_button_irq",  NULL)) {
+  if (request_irq(btn_irq, button_isr, 
+    IRQF_TRIGGER_RISING, 
+    "gpio_button_irq",  NULL)) {
     pr_err("Failed to request IRQ\n");
     goto r_gpio;
   }

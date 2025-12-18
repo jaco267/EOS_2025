@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:146.0) Gecko/20100101 Firefox/146.0" version="29.2.7">
+  <diagram name="Page-1" id="MR1zdZ_Wf2MJpEJiOAyy">
+    <mxGraphModel dx="635" dy="807" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="LTMps4m-F2TZyuhq7tM2-1" edge="1" parent="1" source="LTMps4m-F2TZyuhq7tM2-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="181.0689655172414" y="240.0197044334975" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LTMps4m-F2TZyuhq7tM2-2" parent="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" value="&lt;div&gt;Kernel Start&lt;/div&gt;" vertex="1">
+          <mxGeometry height="30" width="90" x="136" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="LTMps4m-F2TZyuhq7tM2-20" edge="1" parent="1" source="LTMps4m-F2TZyuhq7tM2-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="LTMps4m-F2TZyuhq7tM2-19">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LTMps4m-F2TZyuhq7tM2-16" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;div&gt;Kernel module Init&lt;/div&gt;&lt;div&gt;(LED/GPIO)&lt;/div&gt;" vertex="1">
+          <mxGeometry height="40" width="120" x="120" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="LTMps4m-F2TZyuhq7tM2-24" edge="1" parent="1" source="LTMps4m-F2TZyuhq7tM2-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="LTMps4m-F2TZyuhq7tM2-22">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LTMps4m-F2TZyuhq7tM2-28" edge="1" parent="1" source="LTMps4m-F2TZyuhq7tM2-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="LTMps4m-F2TZyuhq7tM2-27">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LTMps4m-F2TZyuhq7tM2-17" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;等待user space&amp;nbsp;&lt;/div&gt;&lt;div&gt;read/write&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="120" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="LTMps4m-F2TZyuhq7tM2-21" edge="1" parent="1" source="LTMps4m-F2TZyuhq7tM2-19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="LTMps4m-F2TZyuhq7tM2-17">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LTMps4m-F2TZyuhq7tM2-19" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="button ISR 初始化" vertex="1">
+          <mxGeometry height="40" width="120" x="120" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="LTMps4m-F2TZyuhq7tM2-25" edge="1" parent="1" source="LTMps4m-F2TZyuhq7tM2-22" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="LTMps4m-F2TZyuhq7tM2-23">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LTMps4m-F2TZyuhq7tM2-22" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Read 等待按鈕按下" vertex="1">
+          <mxGeometry height="40" width="120" x="70" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="LTMps4m-F2TZyuhq7tM2-23" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="觸發 按鈕 interrupt" vertex="1">
+          <mxGeometry height="40" width="120" x="70" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="LTMps4m-F2TZyuhq7tM2-26" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="按下按鈕" vertex="1">
+          <mxGeometry height="30" width="60" x="136" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="LTMps4m-F2TZyuhq7tM2-27" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Write: 顯示led, 7seg" vertex="1">
+          <mxGeometry height="40" width="120" x="210" y="480" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

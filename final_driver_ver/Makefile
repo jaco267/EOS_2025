@@ -30,11 +30,15 @@ user: room_client test_driver room_server
 room_server: $(SRC_server)
 	$(USER_CC) $(CFLAGS) -o $@ $^
 
+room_client: $(SRC_client)
+	$(USER_CC) $(CFLAGS) -o $@ $^
+
 test_driver: $(SRC_test)
 	$(USER_CC) $(CFLAGS) -o $@ $^
 
-room_client: $(SRC_client)
-	$(USER_CC) $(CFLAGS) -o $@ $^
+test_client: test_client.c
+	$(USER_CC) $(CFLAGS) -o $@ $^ 
+
 
 ncurse: ncurse.c  
 	$(USER_CC) $(CFLAGS) -o $@ $^ -lncurses
