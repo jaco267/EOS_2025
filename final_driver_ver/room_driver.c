@@ -145,22 +145,13 @@ static ssize_t etx_read(struct file *filp, char __user *buf,
     size_t len, loff_t *off){
    char kbuf[32];
    int ret;
-
-   if (*off > 0)
-       return 0;
-   
+   if (*off > 0) return 0;
    // 等待按鈕事件 「只要 btn_pressed == 0 就睡覺；變成 != 0 就醒來」
-   wait_event_interruptible(btn_wq,
-                            atomic_read(&btn_pressed));
-
+   wait_event_interruptible(btn_wq,  atomic_read(&btn_pressed));
    atomic_set(&btn_pressed, 0);
-
    snprintf(kbuf, sizeof(kbuf), "BTN:1\n");
-
    ret = copy_to_user(buf, kbuf, strlen(kbuf));
-   if (ret)
-       return -EFAULT;
-
+   if (ret) return -EFAULT;
    *off += strlen(kbuf);
    return strlen(kbuf);
 }
@@ -281,13 +272,8 @@ static int __init etx_driver_init(void){
   //* ----btn irq---------
   init_waitqueue_head(&btn_wq);
   btn_irq = gpio_to_irq(GPIO_16);
-  if (btn_irq < 0) {pr_err("Failed to get IRQ for GPIO_16\n");
-    goto r_gpio;
-  }
-  if (request_irq(btn_irq, button_isr,
-      // IRQF_TRIGGER_FALLING, 
-      IRQF_TRIGGER_RISING,
-      "gpio_button_irq",  NULL)) {
+  if (btn_irq < 0) {pr_err("Failed to get IRQ for GPIO_16\n");goto r_gpio;}
+  if (request_irq(btn_irq, button_isr, IRQF_TRIGGER_RISING, "gpio_button_irq",  NULL)) {
     pr_err("Failed to request IRQ\n");
     goto r_gpio;
   }
