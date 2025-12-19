@@ -73,9 +73,9 @@ class RFID(object):
       irq = 0x00;     irq_wait = 0x00
       last_bits = None
       n = 0
-      irq = 0x77
-      irq_wait = 0x30
-
+      irq = 0x77;     irq_wait = 0x30
+      #*-----------------------------------
+      
       self.dev_write(0x02, irq | 0x80)
       self.clear_bitmask(0x04, 0x80)
       ##??? set_bitmask ----------

@@ -56,9 +56,16 @@ unsigned long uid_to_dec(uint8_t *uid);
 void set_bitmask(int fd, uint8_t address, uint8_t mask); 
 
 void card_write(int fd, uint8_t* data, int data_len, 
-    int* error, uint8_t* back_data, int* back_len){
-    back_len = 0;  
+    int* error, uint8_t* back_data, int* back_len){  
+    *back_len = 0;  
+    *error = 0; 
+    uint8_t irq = 0x77;  uint8_t irq_wait = 0x30;  
 
+    int last_bits; 
+    uint8_t n = 0;  
+    //*--------------------------------
+    rc522_write(fd, 0x02, irq | 0x80); 
+    //todo  clear bit
 
     //*** set_bitmask  
     rc522_write(fd,0x0A,0x80);  //FIFOLevelReg   0x0A
@@ -67,7 +74,7 @@ void card_write(int fd, uint8_t* data, int data_len,
     //*** mode trans */
     rc522_write(fd,0x01,MODE_TRANSREC); //*CommandReg     0x01 //*MODE_TRANSREC 0x0C
     rc522_write(fd,0x0D,0x80);  //*BitFramingReg  0x0D
-    printf("card write---\n");
+    // printf("card write---\n");
 }
 // 初始化 RC522
 void rc522_init(int fd){
