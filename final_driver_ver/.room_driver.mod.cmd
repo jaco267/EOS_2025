@@ -1,0 +1,1 @@
+cmd_/home/elton/Desktop/EOS_2025/final_driver_ver/room_driver.mod := printf '%s\n'   room_driver.o | awk '!x[$$0]++ { print("/home/elton/Desktop/EOS_2025/final_driver_ver/"$$0) }' > /home/elton/Desktop/EOS_2025/final_driver_ver/room_driver.mod

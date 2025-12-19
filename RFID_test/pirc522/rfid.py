@@ -78,13 +78,17 @@ class RFID(object):
 
       self.dev_write(0x02, irq | 0x80)
       self.clear_bitmask(0x04, 0x80)
+      ##??? set_bitmask ----------
       self.set_bitmask(0x0A, 0x80)
+      
       self.dev_write(0x01, self.mode_idle)
+      ##???? REQA  
       for i in range(len(data)):
           self.dev_write(0x09, data[i])
+      #**** mode tran
       self.dev_write(0x01, self.mode_transrec)
       self.set_bitmask(0x0D, 0x80)
-
+      #****----------------
       i = 2000
       while True:
           n = self.dev_read(0x04)

@@ -39,6 +39,7 @@ pi$ make ncurse
 pi$ make test_client
 pi$ sudo su 
 pi$ ./test_driver    
+pi$ echo "led 1" > /dev/etx_device
 # turn off led 
 pi$ echo "led 0" > /dev/etx_device
 ##### run server 

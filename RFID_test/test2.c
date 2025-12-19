@@ -55,8 +55,19 @@ int rc522_anticoll(int fd,uint8_t *uid);
 unsigned long uid_to_dec(uint8_t *uid);
 void set_bitmask(int fd, uint8_t address, uint8_t mask); 
 
-void card_write(uint8_t* data, int data_len){
+void card_write(int fd, uint8_t* data, int data_len, 
+    int* error, uint8_t* back_data, int* back_len){
+    back_len = 0;  
 
+
+    //*** set_bitmask  
+    rc522_write(fd,0x0A,0x80);  //FIFOLevelReg   0x0A
+    //*** REQA   
+    rc522_write(fd,0x09,0x26); // REQA  // FIFODataReg    0x09
+    //*** mode trans */
+    rc522_write(fd,0x01,MODE_TRANSREC); //*CommandReg     0x01 //*MODE_TRANSREC 0x0C
+    rc522_write(fd,0x0D,0x80);  //*BitFramingReg  0x0D
+    printf("card write---\n");
 }
 // 初始化 RC522
 void rc522_init(int fd){
@@ -126,10 +137,10 @@ int rc522_wait(int fd,uint8_t mask){
 int rc522_request(int fd){
     rc522_write(fd,0x0D,0x07); //BitFramingReg  0x0D
     //todo CARD_WRITE
-    rc522_write(fd,FIFOLevelReg,0x80);
-    rc522_write(fd,FIFODataReg,0x26); // REQA
-    rc522_write(fd,CommandReg,MODE_TRANSREC);
-    rc522_write(fd,BitFramingReg,0x87);
+    uint8_t data[1] = {0x26};
+    int error; uint8_t back_data[100]; int back_len =0 ;
+    card_write(fd,data,1,&error,&back_data,&back_len);
+
     return rc522_wait(fd,0x30);
 }
 
