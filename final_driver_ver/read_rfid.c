@@ -7,7 +7,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
-
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 #define SPI_DEV "/dev/spidev0.0"
 #define SPI_SPEED 250000
 #define RST_GPIO 25
@@ -32,6 +34,67 @@
 #define MODE_RESET  0x0F
 //*---------
 #define ANTENNA_GAIN 0x04
+
+
+#define SERVER_IP   "127.0.0.1"
+#define SERVER_PORT 8080
+
+// 卡片 UID（decimal）
+#define ROOM_0_UID 538838369608UL
+#define ROOM_1_UID 954533143448UL
+#define ROOM_3_UID 48665919977UL
+
+void send_reserve(unsigned long uid)
+{
+    int sock;
+    struct sockaddr_in serv;
+    char cmd[64];
+    char buf[1024];
+
+    // 決定 command
+    if (uid == ROOM_0_UID)
+        snprintf(cmd, sizeof(cmd), "checkin 0");
+    else if (uid == ROOM_1_UID)
+        snprintf(cmd, sizeof(cmd), "checkin 1");
+    else if (uid == ROOM_3_UID)
+        snprintf(cmd, sizeof(cmd), "checkin 2");
+    else
+        snprintf(cmd, sizeof(cmd), "nononono");
+
+    printf("command: %s\n", cmd);
+
+    // 建 socket
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0) {
+        perror("socket");
+        return;
+    }
+
+    memset(&serv, 0, sizeof(serv));
+    serv.sin_family = AF_INET;
+    serv.sin_port = htons(SERVER_PORT);
+    inet_pton(AF_INET, SERVER_IP, &serv.sin_addr);
+
+    // connect
+    if (connect(sock, (struct sockaddr *)&serv, sizeof(serv)) < 0) {
+        perror("connect");
+        close(sock);
+        return;
+    }
+
+    // send
+    send(sock, cmd, strlen(cmd), 0);
+
+    // recv
+    int n = recv(sock, buf, sizeof(buf)-1, 0);
+    if (n > 0) {
+        buf[n] = '\0';
+        printf("[server] %s\n", buf);
+    }
+
+    close(sock);
+}
+
 
 //* 小白卡
 //* 悠遊卡 
@@ -201,10 +264,18 @@ int main()
             if(rc522_anticoll(fd,uid)){
                 unsigned long uid_dec=uid_to_dec(uid);
                 time_t now=time(NULL);
+                // if(uid_dec!=last_uid || (now-last_time)>=DEBOUNCE_SEC){
+                //     printf("UID: %lu\n",uid_dec);
+                //     last_uid=uid_dec;
+                //     last_time=now;
+                // }
                 if(uid_dec!=last_uid || (now-last_time)>=DEBOUNCE_SEC){
-                    printf("UID: %lu\n",uid_dec);
-                    last_uid=uid_dec;
-                    last_time=now;
+                    printf("UID: %lu\n", uid_dec);
+                
+                    send_reserve(uid_dec);   // ← 新增這行
+                
+                    last_uid = uid_dec;
+                    last_time = now;
                 }
             }
         }

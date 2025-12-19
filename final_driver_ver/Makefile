@@ -39,6 +39,8 @@ test_driver: $(SRC_test)
 test_client: test_client.c
 	$(USER_CC) $(CFLAGS) -o $@ $^ 
 
+read_rfid: read_rfid.c  
+	$(USER_CC) $(CFLAGS) -o $@ $^ -lgpiod 
 
 ncurse: ncurse.c  
 	$(USER_CC) $(CFLAGS) -o $@ $^ -lncurses
