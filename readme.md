@@ -1,6 +1,6 @@
-hello 以後程式碼可以丟這裡
-- 詳細解說, 接線請看  final_driver_ver/readme.md  
+#### linux driver 期末專題: 讀書室預約系統   
 
+- [youtube demo 影片](https://www.youtube.com/watch?v=XIC0q5kzs4s)
 
 ```sh  
 cd final_driver_ver
@@ -14,15 +14,6 @@ make user
 make 
 # 詳細資訊請看  final_driver_ver/readme.md  
 ```
-<!-- ```sh
-cd final_1st_ver  
-make 
-./room_server
-./room_client 
-
-#* 詳細解說請看  final_1st_ver/readme.md  
-``` -->
-<!-- ```sh -->
 
 
-<!-- ``` -->
+- 詳細指令, 接線請看  final_driver_ver/readme.md  

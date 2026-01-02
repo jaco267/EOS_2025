@@ -88,7 +88,7 @@ class RFID(object):
       #**** mode tran
       self.dev_write(0x01, self.mode_transrec)
       self.set_bitmask(0x0D, 0x80)
-      #****----------------
+      #****--------rc522_wait--------
       i = 2000
       while True:
           n = self.dev_read(0x04)
