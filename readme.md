@@ -79,9 +79,6 @@ pi$ python read_rfid.py
 #* checkin 0    五秒內
 #* status  0    可以看到 led 3 亮起
 #* status 
-
-#* compile driver code
-make 
 ```
 
 ### led pin  
