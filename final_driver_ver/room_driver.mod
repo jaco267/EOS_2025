@@ -1,1 +1,0 @@
-/home/elton/Desktop/EOS_2025/final_driver_ver/room_driver.o
