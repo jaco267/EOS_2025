@@ -115,5 +115,3 @@ pin    0   1   2   3     4  5   6   7
 GPIO  8   11  10   9    X      25      
 ```
 
-
-- 詳細指令, 接線請看  final_driver_ver/readme.md  
