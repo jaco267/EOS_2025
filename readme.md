@@ -55,7 +55,7 @@ make clean
 #* compile driver code  
 make   
 #*  複製到 rpi  這個是我自己的 rpi 路徑  
-scp -r ../final_driver_ver   elton@192.168.222.222:~/Desktop
+scp -r ./final_driver_ver   elton@192.168.222.222:~/Desktop
 
 ssh elton@192.168.222.222
 pi$ cd ~/Desktop/final_driver_ver

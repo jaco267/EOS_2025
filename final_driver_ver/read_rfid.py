@@ -2,8 +2,8 @@
 import time
 import socket
 import RPi.GPIO as GPIO
-from pirc522 import RFID
-
+# from pirc522 import RFID
+from pirc522_rf import RFID
 # 關閉 GPIO 警告：避免 "This channel is already in use" 類型提示
 GPIO.setwarnings(False)
 
@@ -12,9 +12,9 @@ rdr = RFID(pin_irq=None)
 SERVER_IP = "127.0.0.1"
 SERVER_PORT = 8080
 
-room_0_UID = 538838369608  # 小白卡
+room_0_UID = 956172272948  # 小白卡
 room_1_UID = 954533143448  # elton  悠遊卡  
-room_3_UID = 48665919977   # 磁扣
+room_3_UID = 163293299243   # 磁扣
 
 
 def uid_to_hex(uid_bytes):

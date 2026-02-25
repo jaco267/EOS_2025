@@ -123,10 +123,8 @@ void set_bitmask(int fd, uint8_t address, uint8_t mask);
 
 void card_write(int fd, uint8_t* data, int data_len, 
     int* error, uint8_t* back_data, int* back_len){  
-    *back_len = 0;  
-    *error = 0; 
+    *back_len = 0;   *error = 0; 
     uint8_t irq = 0x77;  uint8_t irq_wait = 0x30;  
-
     int last_bits; 
     uint8_t n = 0;  
     //*--------------------------------
