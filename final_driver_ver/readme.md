@@ -19,6 +19,7 @@ make clean
 # make clean LINUX_KERNEL_PATH=/home/ncrl/rpi-linux-6.1
 # make clean LINUX_KERNEL_PATH=/home/elton/Desktop/emb_linux/linux
 make 
+#### or make rpi   
 # make LINUX_KERNEL_PATH=/home/stu/linux
 # make LINUX_KERNEL_PATH=/home/ncrl/rpi-linux-6.1
 # make LINUX_KERNEL_PATH=/home/elton/Desktop/emb_linux/linux

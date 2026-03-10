@@ -25,6 +25,10 @@ SRC_server = room_server_/room_server.c  \
 all:
 	$(MAKE) -C $(LINUX_KERNEL_PATH) M=$(PWD) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) modules
 
+# compile directly on Raspberry Pi
+rpi:
+	$(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+
 user: room_client test_driver room_server
 
 room_server: $(SRC_server)

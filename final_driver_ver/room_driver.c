@@ -34,25 +34,25 @@ pin 腳                          RPi gpio pin
                              gnd    39 40 ---GPIO 21 (led)
 */
 //* led 
-#define GPIO_14 (14) //led 
-#define GPIO_15 (15) //led 
-#define GPIO_18 (18) //led
+#define GPIO_14 (512+14) //led 
+#define GPIO_15 (512+15) //led 
+#define GPIO_18 (512+18) //led
 // 7seg  
-#define GPIO_17 (17) //a 
-#define GPIO_27 (27) //b 
-#define GPIO_22 (22) //C
+#define GPIO_17 (512+17) //a 
+#define GPIO_27 (512+27) //b 
+#define GPIO_22 (512+22) //C
 // #define GPIO_10 (10) //D
 
 // #define GPIO_9  (9) //E 
 // #define GPIO_11 (11) 
-#define GPIO_0   (0) //D
+#define GPIO_0   (512+0) //D
 //----
-#define GPIO_5   (5) //E
-#define GPIO_6   (6) //F
-#define GPIO_13 (13) //G 
+#define GPIO_5   (512+5) //E
+#define GPIO_6   (512+6) //F
+#define GPIO_13 (512+13) //G 
 
 //* buttom 
-#define GPIO_16 (16) //buttom
+#define GPIO_16 (512+16) //buttom
 
 #define NUM_GPIOS 10 
 static const int All_gpios[NUM_GPIOS] = {GPIO_14, GPIO_15, GPIO_18,
@@ -233,7 +233,10 @@ static int __init etx_driver_init(void){
     goto r_del;
   }
   /*Creating struct class*/
-  if((dev_class = class_create(THIS_MODULE,"etx_class")) == NULL){
+  dev_class = class_create("etx_class");
+
+  // if((dev_class = class_create(THIS_MODULE,"etx_class")) == NULL){
+  if (IS_ERR(dev_class)) {
     pr_err("Cannot create the struct class\n");
     goto r_class;
   }
@@ -265,10 +268,10 @@ static int __init etx_driver_init(void){
   //*--------set GPIO inout----------
   for (int i = 0; i < NUM_GPIOS; i++){
     gpio_direction_output(All_gpios[i],0);  
-    gpio_export(All_gpios[i],false);
+    // gpio_export(All_gpios[i],false);
   }
   gpio_direction_input(GPIO_16);  
-  gpio_export(GPIO_16, false); 
+  // gpio_export(GPIO_16, false); 
   //* ----btn irq---------
   init_waitqueue_head(&btn_wq);
   btn_irq = gpio_to_irq(GPIO_16);
@@ -302,10 +305,10 @@ static int __init etx_driver_init(void){
 // Module exit function
 static void __exit etx_driver_exit(void){
   for (int i = 0; i < NUM_GPIOS; i++){
-    gpio_unexport(All_gpios[i]);
+    // gpio_unexport(All_gpios[i]);
     gpio_free(All_gpios[i]);
   }    
-  gpio_unexport(GPIO_16);
+  // gpio_unexport(GPIO_16);
   free_irq(btn_irq, NULL); 
   gpio_free(GPIO_16);
   //-------------------------------------------
